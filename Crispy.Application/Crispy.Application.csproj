@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.20.0.135146">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Crispy.Core\Crispy.Core.csproj" />
   </ItemGroup>
 
