@@ -61,5 +61,79 @@ namespace Crispy.Tests.BLL
             // Перевіряємо, що метод SignIn навіть не викликався
             mockSignInManager.Verify(x => x.PasswordSignInAsync(It.IsAny<User>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Never);
         }
+
+        [Fact]
+        public async Task RegisterAsync_ValidData_ReturnsSuccess()
+        {
+            var mockUserManager = MockUserManager();
+            mockUserManager.Setup(x => x.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
+                           .ReturnsAsync(IdentityResult.Success);
+
+            var mockSignInManager = MockSignInManager(mockUserManager.Object);
+            var authService = new AuthService(mockUserManager.Object, mockSignInManager.Object);
+
+            // викликаємо наш метод реєстрації
+            var result = await authService.RegisterAsync("new@test.com", "newuser", "StrongPass1!");
+
+            //  результат має бути успішним
+            Assert.True(result.Succeeded);
+        }
+
+        [Fact]
+        public async Task RegisterAsync_DuplicateEmail_ReturnsFailed()
+        {
+            var mockUserManager = MockUserManager();
+            var error = new IdentityError { Description = "Email already exists" };
+            mockUserManager.Setup(x => x.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
+                           .ReturnsAsync(IdentityResult.Failed(error));
+
+            var mockSignInManager = MockSignInManager(mockUserManager.Object);
+            var authService = new AuthService(mockUserManager.Object, mockSignInManager.Object);
+
+            var result = await authService.RegisterAsync("exist@test.com", "user", "Pass123!");
+
+            //  реєстрація провалена
+            Assert.False(result.Succeeded);
+            Assert.Contains(result.Errors, e => e.Description == "Email already exists");
+        }
+
+        [Fact]
+        public async Task GeneratePasswordResetTokenAsync_ExistingUser_ReturnsToken()
+        {
+            //  користувач існує в БД
+            var user = new User { Email = "exist@test.com" };
+            var mockUserManager = MockUserManager();
+
+            mockUserManager.Setup(x => x.FindByEmailAsync("exist@test.com"))
+                           .ReturnsAsync(user);
+            mockUserManager.Setup(x => x.GeneratePasswordResetTokenAsync(user))
+                           .ReturnsAsync("valid-fake-token");
+
+            var mockSignInManager = MockSignInManager(mockUserManager.Object);
+            var authService = new AuthService(mockUserManager.Object, mockSignInManager.Object);
+
+            var result = await authService.GeneratePasswordResetTokenAsync("exist@test.com");
+
+            // токен успішно згенеровано)
+            Assert.NotNull(result);
+            Assert.Equal("valid-fake-token", result);
+        }
+
+        [Fact]
+        public async Task GeneratePasswordResetTokenAsync_NonExistingUser_ReturnsNull()
+        {
+            // Arrange (Підготовка: користувача з таким email немає)
+            var mockUserManager = MockUserManager();
+            mockUserManager.Setup(x => x.FindByEmailAsync(It.IsAny<string>()))
+                           .ReturnsAsync((User)null); // Імітуємо відсутність юзера
+
+            var mockSignInManager = MockSignInManager(mockUserManager.Object);
+            var authService = new AuthService(mockUserManager.Object, mockSignInManager.Object);
+
+            var result = await authService.GeneratePasswordResetTokenAsync("nobody@test.com");
+
+            // Assert (Перевірка: для неіснуючого юзера токен не генерується)
+            Assert.Null(result);
+        }
     }
 }
