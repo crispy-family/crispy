@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35527.113 d17.12
+VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crispy.Web", "Crispy.Web\Crispy.Web.csproj", "{87D6335B-DABF-4DD7-BCFF-E8FECB42E4DE}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crispy.Infrastructure", "Crispy.Infrastructure\Crispy.Infrastructure.csproj", "{26C12365-EFE7-4969-85F1-2DB51DD0BDDE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crispy.Application", "Crispy.Application\Crispy.Application.csproj", "{9B383773-16A9-444F-BC72-74E59C97B16E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crispy.Tests", "Crispy.Tests\Crispy.Tests.csproj", "{696B470D-CB59-4448-91BE-7E8CC1EE156C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{9B383773-16A9-444F-BC72-74E59C97B16E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9B383773-16A9-444F-BC72-74E59C97B16E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9B383773-16A9-444F-BC72-74E59C97B16E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{696B470D-CB59-4448-91BE-7E8CC1EE156C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{696B470D-CB59-4448-91BE-7E8CC1EE156C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{696B470D-CB59-4448-91BE-7E8CC1EE156C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{696B470D-CB59-4448-91BE-7E8CC1EE156C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -4,11 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Crispy.Core.Entities;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crispy.Infrastructure.Data
 {
-    public class CrispyDbContext : DbContext
+    public class CrispyDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     {
         public CrispyDbContext(DbContextOptions<CrispyDbContext> options) : base(options)
         {
