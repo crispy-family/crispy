@@ -1,5 +1,4 @@
 ﻿using Crispy.Application.Services;
-using Crispy.Application.Services;
 using Crispy.Core.Entities;
 using Microsoft.AspNetCore.Identity;
 using Moq;
@@ -49,7 +48,7 @@ namespace Crispy.Tests.BLL
             var mockUserManager = MockUserManager();
             // Імітуємо ситуацію, коли користувача немає в БД
             mockUserManager.Setup(x => x.FindByEmailAsync(It.IsAny<string>()))
-                           .ReturnsAsync((User)null);
+                           .ReturnsAsync((User?)null);
 
             var mockSignInManager = MockSignInManager(mockUserManager.Object);
 

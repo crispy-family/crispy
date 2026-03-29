@@ -5,6 +5,7 @@ using Crispy.Core.Entities;
 using Crispy.Application.Interfaces;
 using Crispy.Application.Services;
 using Serilog;
+using Crispy.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,9 +35,20 @@ builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
     options.Lockout.MaxFailedAccessAttempts = 5;
 })
 .AddEntityFrameworkStores<Crispy.Infrastructure.Data.CrispyDbContext>()
-.AddDefaultTokenProviders(); 
+.AddDefaultTokenProviders();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.Name = "CrispyAuthCookie";
+    options.LoginPath = "/Account/Login"; // Куди відправляти, якщо не авторизований
+    options.AccessDeniedPath = "/Account/AccessDenied"; // Куди відправляти, якщо немає прав
+    options.ExpireTimeSpan = TimeSpan.FromDays(7); // Скільки пам'ятати користувача
+    options.SlidingExpiration = true;
+});
 
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
+builder.Services.AddScoped<IRecipeService, RecipeService>();
 
 var app = builder.Build();
 
@@ -55,8 +67,9 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseAuthorization();
 app.UseAuthentication();
+app.UseAuthorization();
+
 
 app.MapControllerRoute(
     name: "default",

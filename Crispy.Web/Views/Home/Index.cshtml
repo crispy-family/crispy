@@ -1,8 +1,70 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model IEnumerable<Crispy.Core.Entities.Recipe>
+@{
+    ViewData["Title"] = "Головна сторінка";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="px-4 py-5 my-5 text-center bg-light rounded-3 shadow-sm border">
+    <h1 class="display-4 fw-bold text-dark">Вітаємо у <span class="text-warning">Crispy</span>! 🍳</h1>
+    <div class="col-lg-6 mx-auto">
+        <p class="lead mb-4 mt-3 text-secondary">
+            Твій особистий простір для кулінарної творчості. Зберігай улюблені рецепти,
+            ділися ними з друзями та знаходь натхнення для нових смачних страв.
+        </p>
+        <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+            @if (User.Identity!.IsAuthenticated)
+            {
+                <a asp-controller="Recipe" asp-action="Create" class="btn btn-warning btn-lg px-4 gap-3 fw-bold">
+                    Створити новий рецепт
+                </a>
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Register" class="btn btn-warning btn-lg px-4 gap-3 fw-bold">
+                    Приєднатися до нас
+                </a>
+            }
+        </div>
+    </div>
 </div>
+
+<div class="container mt-5 mb-5">
+    <h3 class="text-center mb-4">Новинки від наших шеф-кухарів</h3>
+    <div class="row mt-4">
+
+        @if (Model != null && Model.Any())
+        {
+            // Якщо рецепти є, виводимо кожен у вигляді красивої картки
+            foreach (var recipe in Model)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning fw-bold">@recipe.Title</h5>
+                            <p class="card-text text-muted">
+                                @(recipe.Description.Length > 100 ? recipe.Description.Substring(0, 100) + "..." : recipe.Description)
+                            </p>
+                        </div>
+                        <div class="card-footer bg-white border-top-0">
+                            <small class="text-muted">Автор ID: @recipe.UserId</small>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            // Якщо рецептів у базі ще немає, показуємо заглушку
+            <div class="col text-center text-muted p-5 bg-light rounded-3 border-dashed">
+                <h5 class="fw-normal"><em>Тут ще немає рецептів...</em></h5>
+                <p>Стань першим, хто додасть свій кулінарний шедевр!</p>
+            </div>
+        }
+
+    </div>
+</div>
+
+<style>
+    .border-dashed {
+        border: 2px dashed #dee2e6;
+    }
+</style>

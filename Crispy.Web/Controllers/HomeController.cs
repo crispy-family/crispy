@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Crispy.Application.Interfaces;
 using Crispy.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,27 +7,22 @@ namespace Crispy.Web.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly IRecipeService _recipeService;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(IRecipeService recipeService)
         {
-            _logger = logger;
+            _recipeService = recipeService;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            var recipes = await _recipeService.GetAllRecipesAsync();
+            return View(recipes); 
         }
 
         public IActionResult Privacy()
         {
             return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }
 }
