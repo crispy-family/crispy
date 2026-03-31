@@ -40,5 +40,19 @@ namespace Crispy.Web.Controllers
             ModelState.AddModelError(string.Empty, "Помилка при створенні рецепту.");
             return View(model);
         }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> ToggleFavorite(int recipeId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
+
+            await _recipeService.ToggleFavoriteAsync(user.Id, recipeId);
+
+            // Повертаємо користувача на ту сторінку, звідки він натиснув кнопку
+            string referer = Request.Headers["Referer"].ToString();
+            return Redirect(string.IsNullOrEmpty(referer) ? "/" : referer);
+        }
     }
 }

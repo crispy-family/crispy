@@ -31,5 +31,57 @@ namespace Crispy.Infrastructure.Repositories
                                  .OrderByDescending(r => r.Id)
                                  .ToListAsync();
         }
+        public async Task<IEnumerable<Recipe>> GetByUserIdAsync(int userId)
+        {
+            return await _context.Recipes
+                                 .Where(r => r.UserId == userId)
+                                 .OrderByDescending(r => r.Id)
+                                 .ToListAsync();
+        }
+
+        public async Task AddToFavoritesAsync(int userId, int recipeId)
+        {
+            var favorite = new FavoriteRecipe { UserId = userId, RecipeId = recipeId };
+            await _context.FavoriteRecipes.AddAsync(favorite);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task RemoveFromFavoritesAsync(int userId, int recipeId)
+        {
+            // Шукаємо запис по двох ключах
+            var favorite = await _context.FavoriteRecipes.FindAsync(userId, recipeId);
+            if (favorite != null)
+            {
+                _context.FavoriteRecipes.Remove(favorite);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<bool> IsFavoriteAsync(int userId, int recipeId)
+        {
+            return await _context.FavoriteRecipes.AnyAsync(f => f.UserId == userId && f.RecipeId == recipeId);
+        }
+
+        public async Task<IEnumerable<Recipe>> GetFavoriteRecipesAsync(int userId)
+        {
+            return await _context.FavoriteRecipes
+                .Where(f => f.UserId == userId)
+                .Include(f => f.Recipe) // Завантажуємо дані рецепту
+                .Select(f => f.Recipe!)
+                .ToListAsync();
+        }
+        public async Task<IEnumerable<Recipe>> SearchAsync(string searchTerm)
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+                return await GetAllAsync();
+
+            var lowerTerm = searchTerm.ToLower();
+
+            return await _context.Recipes
+                .Where(r => r.Title.ToLower().Contains(lowerTerm) ||
+                            r.Description.ToLower().Contains(lowerTerm))
+                .OrderByDescending(r => r.Id)
+                .ToListAsync();
+        }
     }
 }

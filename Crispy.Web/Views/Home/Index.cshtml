@@ -29,11 +29,32 @@
 
 <div class="container mt-5 mb-5">
     <h3 class="text-center mb-4">Новинки від наших шеф-кухарів</h3>
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-8">
+            <form asp-controller="Home" asp-action="Index" method="get" class="d-flex shadow-sm rounded">
+                <input type="text" name="searchQuery" value="@ViewBag.SearchQuery"
+                       class="form-control form-control-lg border-warning me-2 flex-grow-1"
+                       placeholder="Шукати борщ, піцу або інгредієнти..." />
+                <button type="submit" class="btn btn-warning btn-lg px-4 fw-bold ms-2"> 🔍 Знайти</button>
+
+                @if (!string.IsNullOrEmpty(ViewBag.SearchQuery))
+                {
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-lg ms-2"> Скинути</a>
+                }
+            </form>
+        </div>
+    </div>
+
+    @if (Model != null && !Model.Any() && !string.IsNullOrEmpty(ViewBag.SearchQuery))
+    {
+        <div class="alert alert-warning text-center mx-auto" style="max-width: 600px;">
+            За запитом <strong>"@ViewBag.SearchQuery"</strong> нічого не знайдено. Спробуй інше слово!
+        </div>
+    }
     <div class="row mt-4">
 
         @if (Model != null && Model.Any())
         {
-            // Якщо рецепти є, виводимо кожен у вигляді красивої картки
             foreach (var recipe in Model)
             {
                 <div class="col-md-4 mb-4">
@@ -44,8 +65,18 @@
                                 @(recipe.Description.Length > 100 ? recipe.Description.Substring(0, 100) + "..." : recipe.Description)
                             </p>
                         </div>
-                        <div class="card-footer bg-white border-top-0">
+                        <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center">
                             <small class="text-muted">Автор ID: @recipe.UserId</small>
+
+                            @if (User.Identity!.IsAuthenticated)
+                            {
+                                <form asp-controller="Recipe" asp-action="ToggleFavorite" method="post">
+                                    <input type="hidden" name="recipeId" value="@recipe.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        ❤️ Зберегти
+                                    </button>
+                                </form>
+                            }
                         </div>
                     </div>
                 </div>

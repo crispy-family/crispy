@@ -23,6 +23,17 @@ namespace Crispy.Infrastructure.Data
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Favorite> Favorites { get; set; }
         public DbSet<Comment> Comments { get; set; }
+        public DbSet<FavoriteRecipe> FavoriteRecipes { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            // Цей рядок життєво необхідний для роботи системи авторизації!
+            base.OnModelCreating(builder);
+
+            // Вказуємо, що комбінація двох ID є первинним ключем
+            builder.Entity<FavoriteRecipe>()
+                .HasKey(fr => new { fr.UserId, fr.RecipeId });
+        }
     }
     
 }

@@ -1,0 +1,94 @@
+﻿@model Crispy.Web.Models.UserProfileViewModel
+@{
+    ViewData["Title"] = "Мій профіль";
+}
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0 bg-light">
+                <div class="card-body text-center py-5">
+                    <div class="display-1 text-warning mb-3">👨‍🍳</div>
+                    <h3 class="card-title fw-bold">@Model.UserName</h3>
+                    <p class="text-muted">@Model.Email</p>
+                    <hr />
+                    <div class="d-flex justify-content-between px-4 mt-4">
+                        <span class="fw-bold">Мої рецепти:</span>
+                        <span class="badge bg-warning text-dark rounded-pill fs-6">@Model.MyRecipes.Count()</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <h3 class="mb-4">Мої кулінарні шедеври</h3>
+
+            <div class="row">
+                @if (Model.MyRecipes.Any())
+                {
+                    foreach (var recipe in Model.MyRecipes)
+                    {
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 shadow-sm border-warning border-opacity-25">
+                                <div class="card-body">
+                                    <h5 class="card-title fw-bold">@recipe.Title</h5>
+                                    <p class="card-text text-muted small">
+                                        @(recipe.Description.Length > 80 ? recipe.Description.Substring(0, 80) + "..." : recipe.Description)
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="col-12 text-center text-muted p-5 bg-light rounded-3 border-dashed">
+                        <h5>Ти ще не додав жодного рецепту 😔</h5>
+                        <p>Час поділитися своїми кулінарними секретами!</p>
+                        <a asp-controller="Recipe" asp-action="Create" class="btn btn-warning mt-2">Створити перший рецепт</a>
+                    </div>
+                }
+            </div>
+            <h3 class="mb-4 mt-5">❤️ Мої збережені рецепти</h3>
+            <div class="row">
+                @if (Model.FavoriteRecipes.Any())
+                {
+                    foreach (var recipe in Model.FavoriteRecipes)
+                    {
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 shadow-sm border-danger border-opacity-25">
+                                <div class="card-body">
+                                    <h5 class="card-title fw-bold">@recipe.Title</h5>
+                                    <p class="card-text text-muted small">
+                                        @(recipe.Description.Length > 80 ? recipe.Description.Substring(0, 80) + "..." : recipe.Description)
+                                    </p>
+                                </div>
+                                <div class="card-footer bg-white border-top-0 text-end">
+                                    <form asp-controller="Recipe" asp-action="ToggleFavorite" method="post">
+                                        <input type="hidden" name="recipeId" value="@recipe.Id" />
+                                        <button type="submit" class="btn btn-sm btn-danger text-white">
+                                            ❌ Видалити з улюблених
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="col-12 text-center text-muted p-4 bg-light rounded-3">
+                        <p class="mb-0">Ти ще не зберіг жодного рецепту. Знайди щось смачненьке на головній сторінці!</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .border-dashed {
+        border: 2px dashed #dee2e6;
+    }
+</style>
