@@ -1,23 +1,21 @@
 using Crispy.Application.Interfaces;
-using Crispy.Application.Services;
 using Crispy.Core.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Crispy.Web.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController : BaseApiController
     {
         private readonly IRecipeService _recipeService;
-        private readonly UserManager<User> _userManager; // Додаємо UserManager
 
-        // Інжектимо обидва сервіси через конструктор
         public HomeController(IRecipeService recipeService, UserManager<User> userManager)
+            : base(userManager)
         {
             _recipeService = recipeService;
-            _userManager = userManager;
         }
 
+        [HttpGet]
         public async Task<IActionResult> Index(string? searchQuery)
         {
             IEnumerable<Recipe> recipes;
@@ -32,21 +30,20 @@ namespace Crispy.Web.Controllers
                 recipes = await _recipeService.GetAllRecipesAsync();
             }
 
+            // Фільтруємо власні рецепти поточного користувача
             if (User.Identity!.IsAuthenticated && string.IsNullOrWhiteSpace(searchQuery))
             {
-                var currentUser = await _userManager.GetUserAsync(User);
-                if (currentUser != null)
+                var currentUserId = GetCurrentUserId();
+                if (currentUserId > 0)
                 {
-                    recipes = recipes.Where(r => r.UserId != currentUser.Id);
+                    recipes = recipes.Where(r => r.UserId != currentUserId);
                 }
             }
 
             return View(recipes);
         }
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+        [HttpGet]
+        public IActionResult Privacy() => View();
     }
 }

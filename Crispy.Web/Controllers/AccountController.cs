@@ -1,29 +1,29 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Crispy.Application.Interfaces;
+﻿using Crispy.Application.Interfaces;
 using Crispy.Core.Entities;
 using Crispy.Web.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Crispy.Web.Controllers
 {
-    public class AccountController : Controller
+    public class AccountController : BaseApiController
     {
         private readonly IAuthService _authService;
 
-        public AccountController(IAuthService authService)
+        public AccountController(IAuthService authService, UserManager<User> userManager)
+            : base(userManager)
         {
             _authService = authService;
         }
 
         [HttpGet]
-        public IActionResult Register()
-        {
-            return View();
-        }
+        public IActionResult Register() => View();
 
         [HttpPost]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+                return View(model);
 
             var result = await _authService.RegisterAsync(model.Email, model.Username, model.Password);
             if (result.Succeeded)
@@ -39,20 +39,19 @@ namespace Crispy.Web.Controllers
         }
 
         [HttpGet]
-        public IActionResult Login()
-        {
-            return View();
-        }
+        public IActionResult Login() => View();
 
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+                return View(model);
+
             var result = await _authService.LoginAsync(model.Email, model.Password, model.RememberMe);
             if (result.Succeeded)
                 return RedirectToAction("Index", "Home");
-            ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-            return View(model);
+
+            return ViewWithError(model, "Невірний логін або пароль.");
         }
 
         [HttpPost]
@@ -63,15 +62,13 @@ namespace Crispy.Web.Controllers
         }
 
         [HttpGet]
-        public IActionResult ForgotPassword()
-        {
-            return View();
-        }
+        public IActionResult ForgotPassword() => View();
 
         [HttpPost]
         public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+                return View(model);
 
             var token = await _authService.GeneratePasswordResetTokenAsync(model.Email);
             if (token != null)
@@ -90,7 +87,9 @@ namespace Crispy.Web.Controllers
         [HttpGet]
         public IActionResult ResetPassword(string token, string email)
         {
-            if(token == null || email == null) return BadRequest("Invalid request");
+            if (token == null || email == null)
+                return BadRequest("Invalid request");
+
             var model = new ResetPasswordViewModel { Token = token, Email = email };
             return View(model);
         }
@@ -98,18 +97,20 @@ namespace Crispy.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+                return View(model);
+
             var result = await _authService.ResetPasswordAsync(model.Email, model.Token, model.NewPassword);
             if (result.Succeeded)
                 return RedirectToAction("Login");
+
             foreach (var error in result.Errors)
                 ModelState.AddModelError(string.Empty, error.Description);
+
             return View(model);
         }
 
-        public IActionResult Index()
-        {
-            return View();
-        }
+        [HttpGet]
+        public IActionResult Index() => View();
     }
 }

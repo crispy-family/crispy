@@ -7,16 +7,15 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Crispy.Web.Controllers
 {
-    [Authorize] 
-    public class RecipeController : Controller
+    [Authorize]
+    public class RecipeController : BaseApiController
     {
         private readonly IRecipeService _recipeService;
-        private readonly UserManager<User> _userManager;
 
         public RecipeController(IRecipeService recipeService, UserManager<User> userManager)
+            : base(userManager)
         {
             _recipeService = recipeService;
-            _userManager = userManager;
         }
 
         [HttpGet]
@@ -25,106 +24,79 @@ namespace Crispy.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(CreateRecipeViewModel model)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+                return View(model);
 
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return Challenge(); 
+            var user = await GetCurrentUserAsync();
+            if (user == null)
+                return Challenge();
 
             var success = await _recipeService.CreateRecipeAsync(model.Title, model.Description, user.Id);
 
             if (success)
-            {
                 return RedirectToAction("Index", "Home");
-            }
 
-            ModelState.AddModelError(string.Empty, "Помилка при створенні рецепту.");
-            return View(model);
+            return ViewWithError(model, "Помилка при створенні рецепту.");
         }
 
         [HttpPost]
-        [Authorize]
         public async Task<IActionResult> ToggleFavorite(int recipeId)
         {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return Challenge();
+            var user = await GetCurrentUserAsync();
+            if (user == null)
+                return Challenge();
 
             await _recipeService.ToggleFavoriteAsync(user.Id, recipeId);
-
-            // Повертаємо користувача на ту сторінку, звідки він натиснув кнопку
-            string referer = Request.Headers["Referer"].ToString();
-            return Redirect(string.IsNullOrEmpty(referer) ? "/" : referer);
+            return RedirectToReferer();
         }
 
         [HttpGet]
-        [Authorize]
-        public async Task<IActionResult> Edit(int id)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            var recipe = await _recipeService.GetRecipeByIdAsync(id);
-
-            // Перевіряємо, чи існує рецепт і чи належить він юзеру
-            if (recipe == null || recipe.UserId != user!.Id)
-            {
-                return Forbid(); // Повертаємо помилку 403 (Доступ заборонено)
-            }
-
-            return View(recipe);
-        }
-
-        [HttpPost]
-        [Authorize]
-        public async Task<IActionResult> Edit(int id, string title, string description)
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            var success = await _recipeService.UpdateRecipeAsync(id, title, description, user!.Id);
-            if (!success)
-            {
-                return Forbid();
-            }
-
-            return RedirectToAction("Index", "Profile"); 
-        }
-
-        [HttpPost]
-        [Authorize]
-        public async Task<IActionResult> Delete(int id)
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            var success = await _recipeService.DeleteRecipeAsync(id, user!.Id);
-            if (!success)
-            {
-                return Forbid();
-            }
-
-            return RedirectToAction("Index", "Profile");
-        }
-        
-        [HttpGet]
-        [AllowAnonymous] 
         public async Task<IActionResult> Details(int id)
         {
             var recipe = await _recipeService.GetRecipeByIdAsync(id);
-            if (recipe == null) return NotFound();
+            if (recipe == null)
+                return NotFound();
 
-            ViewBag.Comments = await _recipeService.GetRecipeCommentsAsync(id);
+            return View(recipe);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            var user = await GetCurrentUserAsync();
+            var recipe = await _recipeService.GetRecipeByIdAsync(id);
+
+            if (recipe == null)
+                return NotFound();
+
+            if (!IsOwner(recipe.UserId))
+                return Forbid();
 
             return View(recipe);
         }
 
         [HttpPost]
-        [Authorize] 
-        public async Task<IActionResult> AddComment(int recipeId, string text)
+        public async Task<IActionResult> Edit(int id, string title, string description)
         {
-            var user = await _userManager.GetUserAsync(User);
+            var user = await GetCurrentUserAsync();
+            var success = await _recipeService.UpdateRecipeAsync(id, title, description, user!.Id);
 
-            if (user != null && !string.IsNullOrWhiteSpace(text))
-            {
-                await _recipeService.AddCommentAsync(recipeId, user.Id, text);
-            }
+            if (!success)
+                return Forbid();
 
-            return RedirectToAction("Details", new { id = recipeId });
+            return RedirectToAction("Index", "Profile");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var user = await GetCurrentUserAsync();
+            var success = await _recipeService.DeleteRecipeAsync(id, user!.Id);
+
+            if (!success)
+                return Forbid();
+
+            return RedirectToAction("Index", "Profile");
         }
     }
 }
