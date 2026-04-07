@@ -83,5 +83,35 @@ namespace Crispy.Infrastructure.Repositories
                 .OrderByDescending(r => r.Id)
                 .ToListAsync();
         }
+        public async Task<Recipe?> GetByIdAsync(int id)
+        {
+            return await _context.Recipes.FindAsync(id);
+        }
+
+        public async Task UpdateAsync(Recipe recipe)
+        {
+            _context.Recipes.Update(recipe);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(Recipe recipe)
+        {
+            _context.Recipes.Remove(recipe);
+            await _context.SaveChangesAsync();
+        }
+        public async Task AddCommentAsync(Comment comment)
+        {
+            await _context.Comments.AddAsync(comment);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<Comment>> GetCommentsByRecipeIdAsync(int recipeId)
+        {
+            return await _context.Comments
+                .Include(c => c.User) 
+                .Where(c => c.RecipeId == recipeId)
+                .OrderByDescending(c => c.CreatedAt) 
+                .ToListAsync();
+        }
     }
 }

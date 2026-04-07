@@ -54,5 +54,77 @@ namespace Crispy.Web.Controllers
             string referer = Request.Headers["Referer"].ToString();
             return Redirect(string.IsNullOrEmpty(referer) ? "/" : referer);
         }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Edit(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var recipe = await _recipeService.GetRecipeByIdAsync(id);
+
+            // Перевіряємо, чи існує рецепт і чи належить він юзеру
+            if (recipe == null || recipe.UserId != user!.Id)
+            {
+                return Forbid(); // Повертаємо помилку 403 (Доступ заборонено)
+            }
+
+            return View(recipe);
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> Edit(int id, string title, string description)
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            var success = await _recipeService.UpdateRecipeAsync(id, title, description, user!.Id);
+            if (!success)
+            {
+                return Forbid();
+            }
+
+            return RedirectToAction("Index", "Profile"); 
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            var success = await _recipeService.DeleteRecipeAsync(id, user!.Id);
+            if (!success)
+            {
+                return Forbid();
+            }
+
+            return RedirectToAction("Index", "Profile");
+        }
+        
+        [HttpGet]
+        [AllowAnonymous] 
+        public async Task<IActionResult> Details(int id)
+        {
+            var recipe = await _recipeService.GetRecipeByIdAsync(id);
+            if (recipe == null) return NotFound();
+
+            ViewBag.Comments = await _recipeService.GetRecipeCommentsAsync(id);
+
+            return View(recipe);
+        }
+
+        [HttpPost]
+        [Authorize] 
+        public async Task<IActionResult> AddComment(int recipeId, string text)
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user != null && !string.IsNullOrWhiteSpace(text))
+            {
+                await _recipeService.AddCommentAsync(recipeId, user.Id, text);
+            }
+
+            return RedirectToAction("Details", new { id = recipeId });
+        }
     }
 }

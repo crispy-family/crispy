@@ -66,5 +66,48 @@ namespace Crispy.Application.Services
         {
             return await _repository.SearchAsync(searchTerm);
         }
+        public async Task<Recipe?> GetRecipeByIdAsync(int id)
+        {
+            return await _repository.GetByIdAsync(id);
+        }
+
+        public async Task<bool> UpdateRecipeAsync(int id, string title, string description, int userId)
+        {
+            var recipe = await _repository.GetByIdAsync(id);
+
+            if (recipe == null || recipe.UserId != userId) return false;
+
+            recipe.Title = title;
+            recipe.Description = description;
+
+            await _repository.UpdateAsync(recipe);
+            return true;
+        }
+
+        public async Task<bool> DeleteRecipeAsync(int id, int userId)
+        {
+            var recipe = await _repository.GetByIdAsync(id);
+
+            if (recipe == null || recipe.UserId != userId) return false;
+
+            await _repository.DeleteAsync(recipe);
+            return true;
+        }
+        public async Task AddCommentAsync(int recipeId, int userId, string text)
+        {
+            var comment = new Comment
+            {
+                RecipeId = recipeId,
+                UserId = userId,
+                Text = text,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _repository.AddCommentAsync(comment);
+        }
+
+        public async Task<IEnumerable<Comment>> GetRecipeCommentsAsync(int recipeId)
+        {
+            return await _repository.GetCommentsByRecipeIdAsync(recipeId);
+        }
     }
 }

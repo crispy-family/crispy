@@ -36,6 +36,22 @@
                                         @(recipe.Description.Length > 80 ? recipe.Description.Substring(0, 80) + "..." : recipe.Description)
                                     </p>
                                 </div>
+                                <div class="card-footer bg-white border-top-0 d-flex justify-content-between">
+                                    <a asp-controller="Recipe" asp-action="Edit" asp-route-id="@recipe.Id" class="btn btn-sm btn-outline-primary">
+                                        ✏️ Редагувати
+                                    </a>
+                                    <form asp-controller="Recipe" asp-action="Delete" asp-route-id="@recipe.Id" method="post" onsubmit="return confirm('Ви впевнені, що хочете видалити цей рецепт?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            🗑️ Видалити
+                                        </button>
+                                    </form>
+                                </div>
+                                <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center">
+                                    <a asp-controller="Recipe" asp-action="Details" asp-route-id="@recipe.Id" class="btn btn-sm btn-outline-secondary">
+                                        📖 Читати повністю
+                                    </a>
+
+                                </div>
                             </div>
                         </div>
                     }

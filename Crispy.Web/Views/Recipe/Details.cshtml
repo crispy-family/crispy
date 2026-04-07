@@ -1,0 +1,63 @@
+﻿@model Crispy.Core.Entities.Recipe
+@{
+    ViewData["Title"] = Model.Title;
+    var comments = ViewBag.Comments as IEnumerable<Crispy.Core.Entities.Comment>;
+}
+
+<div class="container mt-5 mb-5">
+    <div class="card shadow-sm border-0 mb-5">
+        <div class="card-body p-5">
+            <h1 class="fw-bold mb-4">@Model.Title</h1>
+            <p class="fs-5" style="white-space: pre-wrap;">@Model.Description</p>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h3 class="mb-4">💬 Коментарі (@comments?.Count())</h3>
+
+            @if (User.Identity!.IsAuthenticated)
+            {
+                <div class="card bg-light border-0 mb-4 shadow-sm">
+                    <div class="card-body">
+                        <form asp-controller="Recipe" asp-action="AddComment" method="post">
+                            <input type="hidden" name="recipeId" value="@Model.Id" />
+                            <div class="mb-3">
+                                <textarea name="text" class="form-control" rows="3" placeholder="Напишіть свої враження від рецепту..." required></textarea>
+                            </div>
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-warning fw-bold">Надіслати коментар</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-secondary text-center">
+                    Щоб залишити коментар, будь ласка, <a asp-controller="Account" asp-action="Login">увійдіть</a> або <a asp-controller="Account" asp-action="Register">зареєструйтеся</a>.
+                </div>
+            }
+
+            @if (comments != null && comments.Any())
+            {
+                foreach (var comment in comments)
+                {
+                    <div class="card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <strong class="text-primary">@(comment.User?.UserName ?? "Користувач")</strong>
+                                <small class="text-muted">@comment.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</small>
+                            </div>
+                            <p class="mb-0">@comment.Text</p>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <p class="text-muted text-center mt-4">Поки що немає коментарів. Станьте першим!</p>
+            }
+        </div>
+    </div>
+</div>
