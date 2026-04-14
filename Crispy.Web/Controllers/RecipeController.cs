@@ -93,7 +93,31 @@ namespace Crispy.Web.Controllers
             if (recipe == null)
                 return NotFound();
 
+            // Завантажуємо коментарі до рецепту та передаємо у ViewBag
+            ViewBag.Comments = await _recipeService.GetRecipeCommentsAsync(id);
+
             return View(recipe);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddComment(int recipeId, string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                // Якщо коментар порожній, просто повертаємо назад
+                return RedirectToAction("Details", new { id = recipeId });
+            }
+
+            var currentUserId = GetCurrentUserId(); // Або user.Id якщо у вас вже лежить метод
+            
+            // Якщо метод GetCurrentUserId() не працює коректно, можна використати вашу стандартну перевірку:
+            // var user = await GetCurrentUserAsync();
+            // if (user == null) return Challenge();
+            // var userId = user.Id;
+
+            await _recipeService.AddCommentAsync(recipeId, currentUserId, text);
+
+            return RedirectToAction("Details", new { id = recipeId });
         }
 
         [HttpGet]
