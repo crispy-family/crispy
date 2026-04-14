@@ -26,9 +26,15 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
                     </ul>
-                    <ul class="navbar-nav ms-auto">
+                    <ul class="navbar-nav ms-auto gap-2">
                         @if (User.Identity!.IsAuthenticated)
                         {
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link btn btn-outline-danger text-dark fw-bold px-3 py-2 ms-2" asp-controller="Admin" asp-action="Index">👑 Адмін-панель</a>
+                                </li>
+                            }
                             <li class="nav-item">
                                 <a class="nav-link text-dark fw-bold" asp-controller="Profile" asp-action="Index">Привіт, @User.Identity.Name!</a>
                             </li>

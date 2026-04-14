@@ -2,16 +2,31 @@
 @{
     ViewData["Title"] = Model.Title;
     var comments = ViewBag.Comments as IEnumerable<Crispy.Core.Entities.Comment>;
+    var currentUserId = User.Identity?.Name;
+    int? modelUserId = Model.UserId;
+    int? currentUserIdInt = null;
+    if (int.TryParse(currentUserId, out var parsedId))
+    {
+        currentUserIdInt = parsedId;
+    }
 }
 
 <div class="container mt-5 mb-5">
     <div class="card shadow-sm border-0 mb-5">
+        
+        <!-- Додаємо секцію відображення фотографії -->
+        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+        {
+            <img src="@Model.ImageUrl" class="card-img-top" alt="Фото рецепту @Model.Title" style="max-height: 500px; object-fit: cover;">
+        }
+        
         <div class="card-body p-5">
             <h1 class="fw-bold mb-4">@Model.Title</h1>
             <p class="fs-5" style="white-space: pre-wrap;">@Model.Description</p>
         </div>
     </div>
 
+    <!-- Решта коду сторінки (коментарі) залишається без змін -->
     <div class="row justify-content-center">
         <div class="col-md-8">
             <h3 class="mb-4">💬 Коментарі (@comments?.Count())</h3>
@@ -60,4 +75,15 @@
             }
         </div>
     </div>
+
+    @* У місці, де у вас є кнопка видалення: *@
+    @if (User.Identity!.IsAuthenticated && (Model.UserId == currentUserIdInt || User.IsInRole("Admin")))
+    {
+        <form asp-controller="Recipe" asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Ви впевнені, що хочете видалити цей рецепт?');">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <button type="submit" class="btn btn-outline-danger shadow-sm">
+                🗑️ Видалити
+            </button>
+        </form>
+    }
 </div>

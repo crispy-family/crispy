@@ -223,5 +223,99 @@ namespace Crispy.Tests
             Assert.Equal(2, result.Count());
             Assert.Equal("Перший!", result.First().Text);
         }
+
+        [Fact]
+        public async Task CreateRecipeAsync_ShouldSetImageUrl_WhenProvided()
+        {
+            // Arrange
+            var mockRepo = new Mock<IRecipeRepository>();
+            var recipeService = new RecipeService(mockRepo.Object);
+
+            string title = "Тірамісу";
+            string desc = "Рецепт італійського десерту";
+            int userId = 1;
+            string imageUrl = "/uploads/recipes/tiramisu.jpg";
+
+            // Act
+            var result = await recipeService.CreateRecipeAsync(title, desc, userId, imageUrl, null);
+
+            // Assert
+            Assert.True(result);
+            // Перевіряємо, що в репозиторій передано об'єкт Recipe зі збереженим URL зображення
+            mockRepo.Verify(repo => repo.AddAsync(It.Is<Recipe>(r => r.ImageUrl == imageUrl)), Times.Once);
+        }
+
+        [Fact]
+        public async Task CreateRecipeAsync_ShouldSetCategoryId_WhenProvided()
+        {
+            // Arrange
+            var mockRepo = new Mock<IRecipeRepository>();
+            var recipeService = new RecipeService(mockRepo.Object);
+
+            string title = "Борщ";
+            string desc = "Класичний рецепт";
+            int userId = 1;
+            int categoryId = 3; // Наприклад, ID для "Перші страви"
+
+            // Act
+            var result = await recipeService.CreateRecipeAsync(title, desc, userId, null, categoryId);
+
+            // Assert
+            Assert.True(result);
+            // Перевіряємо, що категорія була успішно додана до рецепту перед збереженням
+            mockRepo.Verify(repo => repo.AddAsync(It.Is<Recipe>(r => r.CategoryId == categoryId)), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetCategoriesAsync_ShouldReturnListOfCategories()
+        {
+            // Arrange
+            var mockRepo = new Mock<IRecipeRepository>();
+            var expectedCategories = new List<Category>
+            {
+                new Category { Id = 1, Name = "Десерти" },
+                new Category { Id = 2, Name = "Перші страви" }
+            };
+
+            mockRepo.Setup(repo => repo.GetCategoriesAsync())
+                    .ReturnsAsync(expectedCategories);
+
+            var recipeService = new RecipeService(mockRepo.Object);
+
+            // Act
+            var result = await recipeService.GetCategoriesAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count());
+            Assert.Contains(result, c => c.Name == "Десерти");
+        }
+
+        [Fact]
+        public async Task DeleteRecipeAsync_ShouldReturnTrue_WhenUserIsAdmin_EvenIfNotOwner()
+        {
+            // Arrange
+            var mockRepo = new Mock<IRecipeRepository>();
+            int testRecipeId = 15;
+            int ownerUserId = 5;      // Власник рецепта
+            int adminUserId = 1;      // Адміністратор намагається видалити не свій рецепт
+            bool isAdmin = true;
+
+            var existingRecipe = new Recipe { Id = testRecipeId, UserId = ownerUserId };
+
+            mockRepo.Setup(repo => repo.GetByIdAsync(testRecipeId))
+                    .ReturnsAsync(existingRecipe);
+
+            var recipeService = new RecipeService(mockRepo.Object);
+
+            // Act
+            // Викликаємо перевантажений метод із піднятим прапорцем адміністратора
+            var result = await recipeService.DeleteRecipeAsync(testRecipeId, adminUserId, isAdmin);
+
+            // Assert
+            Assert.True(result);
+            // Видалення має бути дозволено і викликати DeleteAsync
+            mockRepo.Verify(repo => repo.DeleteAsync(existingRecipe), Times.Once);
+        }
     }
 }

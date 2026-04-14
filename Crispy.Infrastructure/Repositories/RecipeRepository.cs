@@ -113,5 +113,9 @@ namespace Crispy.Infrastructure.Repositories
                 .OrderByDescending(c => c.CreatedAt) 
                 .ToListAsync();
         }
+        public async Task<IEnumerable<Category>> GetCategoriesAsync()
+        {
+            return await _context.Categories.ToListAsync();
+        }
     }
 }

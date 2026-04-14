@@ -33,7 +33,17 @@ namespace Crispy.Infrastructure.Data
             // Вказуємо, що комбінація двох ID є первинним ключем
             builder.Entity<FavoriteRecipe>()
                 .HasKey(fr => new { fr.UserId, fr.RecipeId });
+
+            // Data Seeding для категорій
+            builder.Entity<Category>().HasData(
+                new Category { Id = 1, Name = "Сніданки", Description = "Швидкі та смачні ідеї для початку дня" },
+                new Category { Id = 2, Name = "Супи", Description = "Обідні супи та бульйони" },
+                new Category { Id = 3, Name = "Основні страви", Description = "Гарніри та страви з м'яса або риби" },
+                new Category { Id = 4, Name = "Салати", Description = "Легкі і поживні салати" },
+                new Category { Id = 5, Name = "Десерти", Description = "Солодощі, торти, печиво" },
+                new Category { Id = 6, Name = "Напої", Description = "Чай, кава, коктейлі" },
+                new Category { Id = 7, Name = "Випічка", Description = "Хліб, пироги, здоба" }
+            );
         }
     }
-    
 }

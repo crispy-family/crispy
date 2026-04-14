@@ -52,6 +52,21 @@ builder.Services.AddScoped<IRecipeService, RecipeService>();
 
 var app = builder.Build();
 
+// Ініціалізація бази даних та ролей
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        await Crispy.Infrastructure.Data.RolesInitializer.InitializeAsync(services);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding roles the database.");
+    }
+}
+
 app.UseSerilogRequestLogging();
 
 // Configure the HTTP request pipeline.

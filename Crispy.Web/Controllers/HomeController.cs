@@ -16,18 +16,27 @@ namespace Crispy.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(string? searchQuery)
+        public async Task<IActionResult> Index(string? searchQuery, int? categoryId)
         {
+            ViewBag.Categories = await _recipeService.GetCategoriesAsync();
+            ViewBag.SelectedCategory = categoryId;
+            ViewBag.SearchQuery = searchQuery;
+
             IEnumerable<Recipe> recipes;
 
             if (!string.IsNullOrWhiteSpace(searchQuery))
             {
                 recipes = await _recipeService.SearchRecipesAsync(searchQuery);
-                ViewBag.SearchQuery = searchQuery;
             }
             else
             {
                 recipes = await _recipeService.GetAllRecipesAsync();
+            }
+
+            // Застосовуємо фільтр по категорії, якщо клікнули на категорію
+            if (categoryId.HasValue)
+            {
+                recipes = recipes.Where(r => r.CategoryId == categoryId.Value);
             }
 
             // Фільтруємо власні рецепти поточного користувача

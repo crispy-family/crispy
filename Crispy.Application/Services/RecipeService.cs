@@ -17,7 +17,7 @@ namespace Crispy.Application.Services
             _repository = repository;
         }
 
-        public async Task<bool> CreateRecipeAsync(string title, string description, int userId)
+        public async Task<bool> CreateRecipeAsync(string title, string description, int userId, string? imageUrl = null, int? categoryId = null)
         {
             if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(description) || userId <= 0)
                 return false;
@@ -26,7 +26,9 @@ namespace Crispy.Application.Services
             {
                 Title = title,
                 Description = description,
-                UserId = userId
+                UserId = userId,
+                ImageUrl = imageUrl,
+                CategoryId = categoryId // Зберігаємо категорію
             };
 
             await _repository.AddAsync(recipe);
@@ -86,9 +88,16 @@ namespace Crispy.Application.Services
 
         public async Task<bool> DeleteRecipeAsync(int id, int userId)
         {
-            var recipe = await _repository.GetByIdAsync(id);
+            return await DeleteRecipeAsync(id, userId, false);
+        }
 
-            if (recipe == null || recipe.UserId != userId) return false;
+        public async Task<bool> DeleteRecipeAsync(int id, int userId, bool isAdmin = false)
+        {
+            var recipe = await _repository.GetByIdAsync(id);
+            if (recipe == null) return false;
+
+            // Allow deletion if the user is the author or is admin
+            if (!isAdmin && recipe.UserId != userId) return false;
 
             await _repository.DeleteAsync(recipe);
             return true;
@@ -108,6 +117,11 @@ namespace Crispy.Application.Services
         public async Task<IEnumerable<Comment>> GetRecipeCommentsAsync(int recipeId)
         {
             return await _repository.GetCommentsByRecipeIdAsync(recipeId);
+        }
+
+        public async Task<IEnumerable<Category>> GetCategoriesAsync()
+        {
+            return await _repository.GetCategoriesAsync();
         }
     }
 }

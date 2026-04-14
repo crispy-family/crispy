@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace Crispy.Web.Models
 {
@@ -10,5 +11,11 @@ namespace Crispy.Web.Models
 
         [Required(ErrorMessage = "Опис є обов'язковим")]
         public string Description { get; set; } = string.Empty;
+
+        [Display(Name = "Фото готової страви")]
+        public IFormFile? ImageFile { get; set; }
+
+        [Display(Name = "Категорія")]
+        public int? CategoryId { get; set; } // Нове поле
     }
 }
