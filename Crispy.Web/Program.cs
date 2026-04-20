@@ -6,6 +6,7 @@ using Crispy.Application.Interfaces;
 using Crispy.Application.Services;
 using Serilog;
 using Crispy.Infrastructure.Repositories;
+using Crispy.Web.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,6 +51,9 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
 builder.Services.AddScoped<IRecipeService, RecipeService>();
 
+//  Memory Cache
+builder.Services.AddMemoryCache();
+
 var app = builder.Build();
 
 // Ініціалізація бази даних та ролей
@@ -82,12 +86,20 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+//  middleware для логування часу виконання
+app.UseMiddleware<Crispy.Web.Middleware.RequestTimingMiddleware>();
+
+app.UseMiddleware<Crispy.Web.Middleware.RequestLoggingMiddleware>();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
+//  middleware для логування запитів
+app.UseRequestLogging(); 
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapControllers();
 
 app.Run();

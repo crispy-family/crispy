@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
 using Crispy.Application.DTOs;
 using Crispy.Application.Interfaces;
 using Crispy.Core.Entities;
@@ -12,10 +13,15 @@ namespace Crispy.Application.Services
     public class RecipeService : IRecipeService
     {
         private readonly IRecipeRepository _repository;
+        private readonly IMemoryCache _cache;
+        private readonly IConfiguration _configuration;
 
-        public RecipeService(IRecipeRepository repository)
+        // Додаємо IMemoryCache та IConfiguration в конструктор
+        public RecipeService(IRecipeRepository repository, IMemoryCache cache, IConfiguration configuration)
         {
             _repository = repository;
+            _cache = cache;
+            _configuration = configuration;
         }
 
         public async Task<bool> CreateRecipeAsync(string title, string description, int userId, string? imagePath = null, int? categoryId = null, List<RecipeIngredientDto>? ingredients = null)
@@ -147,7 +153,27 @@ namespace Crispy.Application.Services
 
         public async Task<IEnumerable<Category>> GetCategoriesAsync()
         {
-            return await _repository.GetCategoriesAsync();
+            // Унікальний ключ для кешу
+            const string cacheKey = "CategoriesList";
+
+            // Спробуємо отримати дані з кешу
+            if (!_cache.TryGetValue(cacheKey, out IEnumerable<Category> categories))
+            {
+                // Якщо в кеші пусто - витягуємо з БД
+                categories = await _repository.GetCategoriesAsync();
+
+                // Зчитуємо час життя кешу з appsettings.json (за замовчуванням 30 хвилин, якщо не знайдено)
+                int cacheExpirationMinutes = _configuration.GetValue<int>("CacheSettings:CategoriesCacheDurationMinutes", 30);
+
+                // Налаштовуємо параметри збереження в кеші
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromMinutes(cacheExpirationMinutes));
+
+                // Зберігаємо в кеш
+                _cache.Set(cacheKey, categories, cacheEntryOptions);
+            }
+
+            return categories;
         }
         public async Task AddRecipeToShoppingListAsync(int recipeId, int userId)
         {
