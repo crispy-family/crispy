@@ -2,7 +2,8 @@
 using Crispy.Application.Services;
 using Crispy.Core.Entities;
 using Moq;
-using Xunit; 
+using Xunit;
+using Crispy.Application.DTOs;
 
 namespace Crispy.Tests
 {
@@ -316,6 +317,142 @@ namespace Crispy.Tests
             Assert.True(result);
             // Видалення має бути дозволено і викликати DeleteAsync
             mockRepo.Verify(repo => repo.DeleteAsync(existingRecipe), Times.Once);
+        }
+
+        [Fact]
+        public async Task CreateRecipeAsync_ShouldProcessIngredients_Correctly()
+        {
+            // Arrange
+            var mockRepo = new Mock<IRecipeRepository>();
+            var recipeService = new RecipeService(mockRepo.Object);
+
+            var ingredientsDto = new List<RecipeIngredientDto>
+            {
+                new RecipeIngredientDto { Name = "Молоко", Quantity = 1, Unit = "л" },
+                new RecipeIngredientDto { Name = "Новий Екзотичний Фрукт", Quantity = 2, Unit = "шт" }
+            };
+
+            // Імітуємо: Молоко вже є в базі
+            mockRepo.Setup(repo => repo.GetIngredientByNameAsync("Молоко"))
+                    .ReturnsAsync(new Ingredient { Id = 1, Name = "Молоко" });
+
+            // Імітуємо: Екзотичного фрукта ще немає (повертаємо null)
+            mockRepo.Setup(repo => repo.GetIngredientByNameAsync("Новий Екзотичний Фрукт"))
+                    .ReturnsAsync((Ingredient?)null);
+
+            mockRepo.Setup(repo => repo.AddIngredientAsync(It.IsAny<Ingredient>()))
+                    .ReturnsAsync(new Ingredient { Id = 2, Name = "Новий Екзотичний Фрут" });
+
+            // Act (передаємо 6 параметрів, як ми робили в фінальній версії)
+            var result = await recipeService.CreateRecipeAsync("Назва", "Опис", 1, null, null, ingredientsDto);
+
+            // Assert
+            Assert.True(result);
+
+            // Перевіряємо, що метод AddIngredientAsync викликався ТІЛЬКИ для нового фрукта (1 раз)
+            mockRepo.Verify(repo => repo.AddIngredientAsync(It.Is<Ingredient>(i => i.Name == "Новий Екзотичний Фрут")), Times.Once);
+
+            // Перевіряємо, що рецепт зберігся з рівно двома зв'язками RecipeIngredients
+            mockRepo.Verify(repo => repo.AddAsync(It.Is<Recipe>(r => r.RecipeIngredients.Count == 2)), Times.Once);
+        }
+
+        [Fact]
+        public async Task AddRecipeToShoppingListAsync_ShouldAddItems_WhenRecipeHasIngredients()
+        {
+            // Arrange
+            var mockRepo = new Mock<IRecipeRepository>();
+            var recipeService = new RecipeService(mockRepo.Object);
+
+            int recipeId = 5;
+            int userId = 10;
+            var mockIngredients = new List<RecipeIngredient>
+            {
+                new RecipeIngredient { Quantity = 2, Unit = "шт", Ingredient = new Ingredient { Name = "Яйце" } }
+            };
+
+            // Репозиторій повертає інгредієнти
+            mockRepo.Setup(repo => repo.GetRecipeIngredientsAsync(recipeId))
+                    .ReturnsAsync(mockIngredients);
+
+            // Act
+            await recipeService.AddRecipeToShoppingListAsync(recipeId, userId);
+
+            // Assert
+            // Перевіряємо, чи сформувався список покупок з правильними даними
+            mockRepo.Verify(repo => repo.AddToShoppingListAsync(It.Is<IEnumerable<ShoppingListItem>>(list =>
+                list.Count() == 1 && list.First().IngredientName == "Яйце")), Times.Once);
+        }
+
+        [Fact]
+        public async Task AddRecipeToShoppingListAsync_ShouldNotCallRepo_WhenRecipeIsEmpty()
+        {
+            // Arrange
+            var mockRepo = new Mock<IRecipeRepository>();
+            var recipeService = new RecipeService(mockRepo.Object);
+
+            // Репозиторій повертає ПОРОЖНІЙ список інгредієнтів
+            mockRepo.Setup(repo => repo.GetRecipeIngredientsAsync(It.IsAny<int>()))
+                    .ReturnsAsync(new List<RecipeIngredient>());
+
+            // Act
+            await recipeService.AddRecipeToShoppingListAsync(1, 1);
+
+            // Assert
+            // Збереження в кошик НЕ мало відбутися
+            mockRepo.Verify(repo => repo.AddToShoppingListAsync(It.IsAny<IEnumerable<ShoppingListItem>>()), Times.Never);
+        }
+        [Fact]
+        public async Task ToggleFollowUserAsync_ShouldNotCallRepo_WhenUserTriesToFollowSelf()
+        {
+            // Arrange
+            var mockRepo = new Mock<IRecipeRepository>();
+            var recipeService = new RecipeService(mockRepo.Object);
+            int sameUserId = 1;
+
+            // Act
+            await recipeService.ToggleFollowUserAsync(sameUserId, sameUserId);
+
+            // Assert
+            // Репозиторій не повинен був викликатися
+            mockRepo.Verify(repo => repo.ToggleFollowAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task ToggleFollowUserAsync_ShouldCallRepo_WhenUsersAreDifferent()
+        {
+            // Arrange
+            var mockRepo = new Mock<IRecipeRepository>();
+            var recipeService = new RecipeService(mockRepo.Object);
+
+            // Act
+            await recipeService.ToggleFollowUserAsync(1, 2);
+
+            // Assert
+            mockRepo.Verify(repo => repo.ToggleFollowAsync(1, 2), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetUserFeedAsync_ShouldReturnFeedFromRepository()
+        {
+            // Arrange
+            var mockRepo = new Mock<IRecipeRepository>();
+            var recipeService = new RecipeService(mockRepo.Object);
+
+            var expectedFeed = new List<Recipe>
+            {
+                new Recipe { Id = 10, Title = "Рецепт з підписки" }
+            };
+
+            mockRepo.Setup(repo => repo.GetFeedRecipesAsync(1))
+                    .ReturnsAsync(expectedFeed);
+
+            // Act
+            var result = await recipeService.GetUserFeedAsync(1);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result);
+            Assert.Equal("Рецепт з підписки", result.First().Title);
         }
     }
 }
