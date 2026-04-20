@@ -13,12 +13,14 @@ namespace Crispy.Web.Controllers
     {
         private readonly IRecipeService _recipeService;
         private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly UserManager<User> _userManager;
 
         // Інжектимо IWebHostEnvironment для збереження файлів
         public RecipeController(IRecipeService recipeService, UserManager<User> userManager, IWebHostEnvironment webHostEnvironment)
             : base(userManager)
         {
             _recipeService = recipeService;
+            _userManager = userManager;
             _webHostEnvironment = webHostEnvironment;
         }
 
@@ -33,6 +35,7 @@ namespace Crispy.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(CreateRecipeViewModel model)
         {
+            // 1. Перевірка валідації
             if (!ModelState.IsValid)
             {
                 var categories = await _recipeService.GetCategoriesAsync();
@@ -40,12 +43,13 @@ namespace Crispy.Web.Controllers
                 return View(model);
             }
 
+            // 2. Перевірка користувача
             var user = await GetCurrentUserAsync();
             if (user == null)
                 return Challenge();
 
-            // Логіка збереження картинки
-            string? uniqueFileName = null;
+            // 3. Збереження картинки
+            string? imagePath = null; // Змінив назву змінної для зручності
             if (model.ImageFile != null)
             {
                 string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images", "recipes");
@@ -54,20 +58,27 @@ namespace Crispy.Web.Controllers
                     Directory.CreateDirectory(uploadsFolder);
                 }
 
-                // Використовуємо Guid, щоб запобігти збігу імен
-                uniqueFileName = Guid.NewGuid().ToString() + "_" + model.ImageFile.FileName;
+                // Path.GetFileName захищає від специфічних символів у назві файлу
+                string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(model.ImageFile.FileName);
                 string filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
                 using (var fileStream = new FileStream(filePath, FileMode.Create))
                 {
                     await model.ImageFile.CopyToAsync(fileStream);
                 }
-                
-                uniqueFileName = "/images/recipes/" + uniqueFileName;
+
+                imagePath = "/images/recipes/" + uniqueFileName;
             }
 
-            // В кінці передаємо model.CategoryId
-            var success = await _recipeService.CreateRecipeAsync(model.Title, model.Description, user.Id, uniqueFileName, model.CategoryId);
+            
+            var success = await _recipeService.CreateRecipeAsync(
+                model.Title,
+                model.Description,
+                user.Id,
+                imagePath,
+                model.CategoryId,  // <--- Додали передачу Категорії
+                model.Ingredients  // <--- Передаємо інгредієнти замість null
+            );
 
             if (success)
                 return RedirectToAction("Index", "Home");
@@ -86,6 +97,7 @@ namespace Crispy.Web.Controllers
             return RedirectToReferer();
         }
 
+        [AllowAnonymous] // Додаємо, щоб анонімні теж могли дивитись (якщо ви хочете цього)
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
@@ -95,6 +107,18 @@ namespace Crispy.Web.Controllers
 
             // Завантажуємо коментарі до рецепту та передаємо у ViewBag
             ViewBag.Comments = await _recipeService.GetRecipeCommentsAsync(id);
+
+            // Перевіряємо, чи підписаний поточний користувач на автора рецепту
+            bool isFollowing = false;
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                var currentUserIdString = _userManager.GetUserId(User);
+                if (int.TryParse(currentUserIdString, out int currentUserId))
+                {
+                    isFollowing = await _recipeService.IsFollowingUserAsync(currentUserId, recipe.UserId);
+                }
+            }
+            ViewBag.IsFollowing = isFollowing;
 
             return View(recipe);
         }
@@ -174,6 +198,23 @@ namespace Crispy.Web.Controllers
             }
             
             return RedirectToAction("Index", "Profile");
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> AddToShoppingList(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
+
+            // Викликаємо наш новий сервіс
+            await _recipeService.AddRecipeToShoppingListAsync(id, user.Id);
+
+            // Зберігаємо повідомлення, яке покажемо на сторінці після перезавантаження
+            TempData["SuccessMessage"] = "🛒 Інгредієнти успішно додані до вашого списку покупок!";
+
+            // Повертаємо на сторінку рецепту
+            return RedirectToAction("Details", new { id = id });
         }
     }
 }

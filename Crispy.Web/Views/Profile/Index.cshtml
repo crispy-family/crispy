@@ -21,6 +21,20 @@
         </div>
 
         <div class="col-md-8">
+            <div class="profile-header mb-4">
+                <h2>Профіль: @Model.UserName</h2>
+
+                @if (!Model.IsOwnProfile && User.Identity.IsAuthenticated)
+                {
+                    <form asp-controller="Profile" asp-action="ToggleFollow" method="post" class="d-inline">
+                        <input type="hidden" name="followedUserId" value="@Model.UserId" />
+                        <button type="submit" class="btn @(Model.IsFollowing ? "btn-secondary" : "btn-primary")">
+                            @(Model.IsFollowing ? "Відписатися" : "Підписатися")
+                        </button>
+                    </form>
+                }
+            </div>
+
             <h3 class="mb-4">Мої кулінарні шедеври</h3>
 
             <div class="row">

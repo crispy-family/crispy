@@ -1,0 +1,69 @@
+﻿@model IEnumerable<Crispy.Core.Entities.ShoppingListItem>
+@{
+    ViewData["Title"] = "Мій список покупок";
+}
+
+<div class="container mt-5 mb-5 max-w-md">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-warning text-dark p-4 d-flex justify-content-between align-items-center">
+            <h3 class="mb-0 fw-bold">🛒 Список покупок</h3>
+
+            @if (Model.Any(m => m.IsBought))
+            {
+                <form asp-controller="ShoppingList" asp-action="ClearBought" method="post" class="m-0">
+                    <button type="submit" class="btn btn-sm btn-outline-dark fw-bold">
+                        🧹 Очистити куплене
+                    </button>
+                </form>
+            }
+        </div>
+
+        <div class="card-body p-0">
+            @if (Model.Any())
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var item in Model)
+                    {
+                        <li class="list-group-item p-3 d-flex justify-content-between align-items-center @(item.IsBought ? "bg-light" : "")">
+
+                            <div class="d-flex align-items-center flex-grow-1">
+                                <form asp-controller="ShoppingList" asp-action="ToggleItem" method="post" class="m-0 w-100 text-start">
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" class="btn btn-link p-0 text-decoration-none text-dark text-start d-flex align-items-center w-100">
+                                        <span class="fs-4 me-3">
+                                            @(item.IsBought ? "✅" : "⬜")
+                                        </span>
+                                        <span class="fs-5 @(item.IsBought ? "text-decoration-line-through text-muted" : "fw-bold")">
+                                            @item.IngredientName
+                                        </span>
+                                    </button>
+                                </form>
+                            </div>
+
+                            <span class="badge bg-secondary rounded-pill fs-6 ms-3 @(item.IsBought ? "opacity-50" : "")">
+                                @item.Quantity @item.Unit
+                            </span>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <div class="text-center p-5 text-muted">
+                    <h1 class="display-1 mb-3">🛍️</h1>
+                    <h4>Твій кошик порожній</h4>
+                    <p>Знайди цікавий рецепт і додай інгредієнти сюди!</p>
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-warning mt-2">Перейти до рецептів</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Робимо кошик вужчим, щоб він ідеально виглядав на телефоні */
+    .max-w-md {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+</style>

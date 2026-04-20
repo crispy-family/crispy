@@ -2,17 +2,20 @@ using Crispy.Application.Interfaces;
 using Crispy.Core.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Crispy.Web.Controllers
 {
     public class HomeController : BaseApiController
     {
         private readonly IRecipeService _recipeService;
+        private readonly UserManager<User> _userManager;
 
         public HomeController(IRecipeService recipeService, UserManager<User> userManager)
             : base(userManager)
         {
             _recipeService = recipeService;
+            _userManager = userManager;
         }
 
         [HttpGet]
@@ -54,5 +57,16 @@ namespace Crispy.Web.Controllers
 
         [HttpGet]
         public IActionResult Privacy() => View();
+
+        [Authorize]
+        public async Task<IActionResult> Feed()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return Challenge();
+
+            var feedRecipes = await _recipeService.GetUserFeedAsync(user.Id);
+            return View(feedRecipes);
+        }
     }
 }

@@ -12,6 +12,13 @@
 }
 
 <div class="container mt-5 mb-5">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm text-center" role="alert">
+            <strong>Супер!</strong> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
     <div class="card shadow-sm border-0 mb-5">
         
         <!-- Додаємо секцію відображення фотографії -->
@@ -22,7 +29,60 @@
         
         <div class="card-body p-5">
             <h1 class="fw-bold mb-4">@Model.Title</h1>
+            
+            <!-- Блок автора та підписки -->
+            <div class="d-flex align-items-center mb-4 bg-light p-3 rounded">
+                <div class="me-3">
+                    <strong>Автор:</strong> 
+                    <a asp-controller="Profile" asp-action="Details" asp-route-id="@Model.UserId" class="text-decoration-none fs-5">
+                        @(Model.User?.UserName ?? "Невідомий Шеф")
+                    </a>
+                </div>
+
+                @if (User.Identity!.IsAuthenticated && currentUserIdInt != Model.UserId)
+                {
+                    <form asp-controller="Profile" asp-action="ToggleFollow" method="post" class="m-0">
+                        <!-- Зверніть увагу: ми повертаємось на ту саму сторінку рецепту після підписки -->
+                        <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                        <input type="hidden" name="followedUserId" value="@Model.UserId" />
+                        
+                        @if (ViewBag.IsFollowing == true)
+                        {
+                            <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                                Відписатися
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3">
+                                Підписатися
+                            </button>
+                        }
+                    </form>
+                }
+            </div>
+            
             <p class="fs-5" style="white-space: pre-wrap;">@Model.Description</p>
+        </div>
+        <hr class="my-4" />
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Сподобався рецепт?</h4>
+
+            @if (User.Identity!.IsAuthenticated)
+            {
+                <form asp-controller="Recipe" asp-action="AddToShoppingList" method="post">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <button type="submit" class="btn btn-success btn-lg fw-bold shadow-sm">
+                        🛒 Додати продукти в список покупок
+                    </button>
+                </form>
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login" class="btn btn-outline-success">
+                    Увійдіть, щоб додати в список покупок
+                </a>
+            }
         </div>
     </div>
 

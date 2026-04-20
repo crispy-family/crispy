@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
+using Crispy.Application.DTOs;
 
 namespace Crispy.Web.Models
 {
@@ -16,6 +17,8 @@ namespace Crispy.Web.Models
         public IFormFile? ImageFile { get; set; }
 
         [Display(Name = "Категорія")]
-        public int? CategoryId { get; set; } // Нове поле
+        public int? CategoryId { get; set; }
+
+        public List<RecipeIngredientDto> Ingredients { get; set; } = new List<RecipeIngredientDto>();
     }
 }

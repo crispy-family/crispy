@@ -17,5 +17,7 @@ namespace Crispy.Core.Entities
         public ICollection<Review> Reviews { get; set; } = new List<Review>();
         public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+        public ICollection<UserFollower> Followers { get; set; } = new List<UserFollower>();
+        public ICollection<UserFollower> Following { get; set; } = new List<UserFollower>();
     }
 }

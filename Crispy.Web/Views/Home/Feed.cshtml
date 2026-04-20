@@ -1,0 +1,38 @@
+﻿@model IEnumerable<Crispy.Core.Entities.Recipe>
+
+@{
+    ViewData["Title"] = "Моя стрічка";
+}
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="display-5">Моя стрічка 🍳</h2>
+        <p class="text-muted">Рецепти від шеф-кухарів, на яких ви підписані.</p>
+    </div>
+</div>
+
+<div class="row">
+    @if (!Model.Any())
+    {
+        <div class="col-12 text-center p-5">
+            <h4 class="text-muted">У вашій стрічці поки що порожньо.</h4>
+            <p>Знайдіть цікавих авторів на <a asp-controller="Home" asp-action="Index">головній сторінці</a> і підпишіться на них!</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var recipe in Model)
+        {
+            // Скопіюйте сюди часткове представлення або код картки рецепту з Home/Index.cshtml
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">@recipe.Title</h5>
+                        <p class="card-text">@recipe.Description</p>
+                        <a asp-controller="Recipe" asp-action="Details" asp-route-id="@recipe.Id" class="btn btn-outline-primary mt-auto">Дивитись рецепт</a>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>

@@ -1,0 +1,280 @@
+﻿@using Crispy.Core.Enums
+@using Crispy.Core.Entities
+@model IEnumerable<MealPlan>
+
+@{
+    ViewData["Title"] = "Мій план харчування";
+    var favoriteRecipes = ViewBag.FavoriteRecipes as IEnumerable<Recipe>;
+
+    // Перелік днів тижня (починаючи з понеділка для зручності)
+    var daysOfWeek = new[] 
+    { 
+        DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, 
+        DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday 
+    };
+
+    // Перелік типів прийомів їжі
+    var mealTypes = Enum.GetValues<MealType>();
+}
+
+<div class="container mt-4 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold">📅 План харчування на тиждень</h1>
+    </div>
+
+    @if (favoriteRecipes == null || !favoriteRecipes.Any())
+    {
+        <div class="alert alert-warning shadow-sm">
+            <strong>Увага!</strong> У вас немає улюблених рецептів. Додайте рецепти до улюблених, щоб мати змогу планувати своє меню!
+        </div>
+    }
+
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table table-bordered bg-white text-center align-middle mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th style="width: 15%;">День / Прийом</th>
+                    @foreach (var mealType in mealTypes)
+                    {
+                        <th>
+                            @(mealType switch
+                            {
+                                MealType.Breakfast => "🥞 Сніданок",
+                                MealType.Lunch => "🍲 Обід",
+                                MealType.Dinner => "🥩 Вечеря",
+                                MealType.Snack => "🍎 Перекус",
+                                _ => mealType.ToString()
+                            })
+                        </th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var day in daysOfWeek)
+                {
+                    <tr>
+                        <td class="bg-light fw-bold align-middle">
+                            @System.Globalization.CultureInfo.GetCultureInfo("uk-UA").DateTimeFormat.GetDayName(day).ToUpper()
+                        </td>
+
+                        @foreach (var mealType in mealTypes)
+                        {
+                            var mealsForSlot = Model.Where(m => m.DayOfWeek == day && m.MealType == mealType).ToList();
+
+                            <td>
+                                @if (mealsForSlot.Any())
+                                {
+                                    foreach (var meal in mealsForSlot)
+                                    {
+                                        <div class="card mb-2 border-primary shadow-sm">
+                                            <div class="card-body p-2 position-relative">
+                                                <a asp-controller="Recipe" asp-action="Details" asp-route-id="@meal.RecipeId" 
+                                                   class="text-decoration-none fw-bold text-dark d-block text-truncate" style="max-width: 150px; margin: 0 auto;">
+                                                    @(meal.Recipe?.Title ?? "Рецепт")
+                                                </a>
+
+                                                <form asp-action="Remove" method="post" class="position-absolute top-0 end-0 mt-1 me-1">
+                                                    <input type="hidden" name="planId" value="@meal.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger p-0" style="width: 20px; height: 20px; line-height: 1;" title="Видалити з плану">
+                                                        &times;
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+
+                                @if (favoriteRecipes != null && favoriteRecipes.Any())
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-success mt-1 rounded-circle fw-bold"
+                                            data-bs-toggle="modal" data-bs-target="#addMealModal"
+                                            data-day="@day" data-mealtype="@mealType" title="Додати страву">
+                                        +
+                                    </button>
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Модальне вікно для додавання рецепту в план -->
+<div class="modal fade" id="addMealModal" tabindex="-1" aria-labelledby="addMealModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Add" method="post" id="addMealForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addMealModalLabel">Додати страву в план</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="dayOfWeek" id="modalDayOfWeek" />
+                    <input type="hidden" name="mealType" id="modalMealType" />
+                    <!-- Сюди буде записуватися ID вибраного рецепту -->
+                    <input type="hidden" name="recipeId" id="selectedRecipeId" required />
+
+                    <!-- Вкладки (Tabs) -->
+                    <ul class="nav nav-tabs mb-3" id="recipeTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="favorites-tab" data-bs-toggle="tab" data-bs-target="#favorites" type="button" role="tab" aria-controls="favorites" aria-selected="true">Улюблені</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button" role="tab" aria-controls="search" aria-selected="false">Пошук</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="recipeTabsContent">
+                        <!-- Вкладка: Улюблені -->
+                        <div class="tab-pane fade show active" id="favorites" role="tabpanel" aria-labelledby="favorites-tab">
+                            <label class="form-label">Виберіть рецепт з улюблених:</label>
+                            <select id="favoriteRecipeSelect" class="form-select">
+                                <option value="">-- Оберіть рецепт --</option>
+                                @if (favoriteRecipes != null)
+                                {
+                                    foreach (var recipe in favoriteRecipes)
+                                    {
+                                        <option value="@recipe.Id">@recipe.Title</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Вкладка: Пошук -->
+                        <div class="tab-pane fade" id="search" role="tabpanel" aria-labelledby="search-tab">
+                            <label class="form-label">Введіть назву рецепту:</label>
+                            <div class="input-group mb-2">
+                                <input type="text" id="recipeSearchInput" class="form-control" placeholder="Наприклад, борщ...">
+                                <button type="button" class="btn btn-outline-secondary" id="btnSearch">Шукати</button>
+                            </div>
+                            <!-- Контейнер для результатів пошуку -->
+                            <div id="searchResults" class="list-group mt-2" style="max-height: 200px; overflow-y: auto;">
+                                <div class="text-muted small p-2">Почніть вводити назву...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Відображення вибраного рецепту -->
+                    <div class="mt-3 p-2 bg-light border rounded text-center d-none" id="selectedRecipeDisplay">
+                        <span class="text-muted small">Вибрано:</span> <br/>
+                        <strong id="selectedRecipeTitle" class="text-success fs-5"></strong>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <!-- Кнопка неактивна, поки не вибрано рецепт -->
+                    <button type="submit" class="btn btn-primary" id="btnSaveMeal" disabled>Зберегти</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const addMealModal = document.getElementById('addMealModal');
+            const hiddenRecipeId = document.getElementById('selectedRecipeId');
+            const favoriteSelect = document.getElementById('favoriteRecipeSelect');
+            const btnSave = document.getElementById('btnSaveMeal');
+            const displayDiv = document.getElementById('selectedRecipeDisplay');
+            const displayTitle = document.getElementById('selectedRecipeTitle');
+            
+            // Встановлення днів і типів
+            addMealModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                document.getElementById('modalDayOfWeek').value = button.getAttribute('data-day');
+                document.getElementById('modalMealType').value = button.getAttribute('data-mealtype');
+                
+                // Скидання форми при відкритті
+                hiddenRecipeId.value = '';
+                favoriteSelect.value = '';
+                document.getElementById('recipeSearchInput').value = '';
+                document.getElementById('searchResults').innerHTML = '<div class="text-muted small p-2">Почніть вводити назву...</div>';
+                btnSave.disabled = true;
+                displayDiv.classList.add('d-none');
+            });
+
+            // Функція для оновлення вибраного рецепту
+            function setSelectedRecipe(id, title) {
+                hiddenRecipeId.value = id;
+                displayTitle.textContent = title;
+                displayDiv.classList.remove('d-none');
+                btnSave.disabled = false;
+            }
+
+            // Слухач для вибору з улюблених
+            favoriteSelect.addEventListener('change', function() {
+                if(this.value) {
+                    setSelectedRecipe(this.value, this.options[this.selectedIndex].text);
+                } else {
+                    hiddenRecipeId.value = '';
+                    btnSave.disabled = true;
+                    displayDiv.classList.add('d-none');
+                }
+            });
+
+            // Логіка пошуку (AJAX)
+            const searchInput = document.getElementById('recipeSearchInput');
+            const searchBtn = document.getElementById('btnSearch');
+            const searchResults = document.getElementById('searchResults');
+
+            function performSearch() {
+                const query = searchInput.value.trim();
+                if (query.length < 2) {
+                    searchResults.innerHTML = '<div class="text-muted small p-2">Введіть хоча б 2 символи.</div>';
+                    return;
+                }
+
+                searchResults.innerHTML = '<div class="text-center p-2"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> Шукаємо...</div>';
+
+                fetch(`/MealPlanner/SearchRecipes?query=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        searchResults.innerHTML = '';
+                        if (data.length === 0) {
+                            searchResults.innerHTML = '<div class="text-muted small p-2">Нічого не знайдено.</div>';
+                            return;
+                        }
+
+                        data.forEach(recipe => {
+                            const a = document.createElement('a');
+                            a.href = '#';
+                            a.className = 'list-group-item list-group-item-action list-group-item-light';
+                            a.textContent = recipe.title;
+                            a.onclick = function(e) {
+                                e.preventDefault();
+                                
+                                // Видаляємо active клас з інших
+                                const items = searchResults.querySelectorAll('.list-group-item');
+                                items.forEach(i => i.classList.remove('active'));
+                                
+                                // Додаємо active поточному
+                                this.classList.add('active');
+                                
+                                // Встановлюємо вибраний рецепт
+                                setSelectedRecipe(recipe.id, recipe.title);
+                            };
+                            searchResults.appendChild(a);
+                        });
+                    })
+                    .catch(error => {
+                        searchResults.innerHTML = '<div class="text-danger small p-2">Помилка пошуку.</div>';
+                        console.error('Error:', error);
+                    });
+            }
+
+            // Пошук по кнопці і по Enter
+            searchBtn.addEventListener('click', performSearch);
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Запобігає відправці форми
+                    performSearch();
+                }
+            });
+        });
+    </script>
+}

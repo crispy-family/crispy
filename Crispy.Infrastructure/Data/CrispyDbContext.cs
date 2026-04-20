@@ -24,6 +24,10 @@ namespace Crispy.Infrastructure.Data
         public DbSet<Favorite> Favorites { get; set; }
         public DbSet<Comment> Comments { get; set; }
         public DbSet<FavoriteRecipe> FavoriteRecipes { get; set; }
+        public DbSet<ShoppingListItem> ShoppingListItems { get; set; }
+
+        public DbSet<UserFollower> UserFollowers { get; set; }
+        public DbSet<MealPlan> MealPlans { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -44,6 +48,35 @@ namespace Crispy.Infrastructure.Data
                 new Category { Id = 6, Name = "Напої", Description = "Чай, кава, коктейлі" },
                 new Category { Id = 7, Name = "Випічка", Description = "Хліб, пироги, здоба" }
             );
+
+            builder.Entity<UserFollower>()
+                .HasKey(uf => new { uf.FollowerId, uf.FollowedUserId });
+
+            // 2. Налаштовуємо зв'язок для Читача
+            builder.Entity<UserFollower>()
+                .HasOne(uf => uf.Follower)
+                .WithMany(u => u.Following)
+                .HasForeignKey(uf => uf.FollowerId)
+                .OnDelete(DeleteBehavior.Restrict); // Обов'язково Restrict, щоб уникнути помилок SQL
+
+            // 3. Налаштовуємо зв'язок для Автора
+            builder.Entity<UserFollower>()
+                .HasOne(uf => uf.FollowedUser)
+                .WithMany(u => u.Followers)
+                .HasForeignKey(uf => uf.FollowedUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<MealPlan>()
+                .HasOne(m => m.User)
+                .WithMany()
+                .HasForeignKey(m => m.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<MealPlan>()
+                .HasOne(m => m.Recipe)
+                .WithMany()
+                .HasForeignKey(m => m.RecipeId)
+                .OnDelete(DeleteBehavior.Restrict); // або Cascade, залежить від вашої логіки
         }
     }
 }

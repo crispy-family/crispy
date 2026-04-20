@@ -25,6 +25,22 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
+                        @if (User.Identity!.IsAuthenticated)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark fw-bold" asp-controller="ShoppingList" asp-action="Index">
+                                    🛒 Мій кошик
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Feed">Моя стрічка</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark fw-bold text-success" asp-controller="MealPlanner" asp-action="Index">
+                                    📅 Планувальник
+                                </a>
+                            </li>
+                        }
                     </ul>
                     <ul class="navbar-nav ms-auto gap-2">
                         @if (User.Identity!.IsAuthenticated)
