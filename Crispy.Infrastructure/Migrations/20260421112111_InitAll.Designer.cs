@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Crispy.Infrastructure.Migrations
 {
     [DbContext(typeof(CrispyDbContext))]
-    [Migration("20260329222836_MakeCategoryOptional")]
-    partial class MakeCategoryOptional
+    [Migration("20260421112111_InitAll")]
+    partial class InitAll
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -43,6 +43,50 @@ namespace Crispy.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Categories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Description = "Швидкі та смачні ідеї для початку дня",
+                            Name = "Сніданки"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Description = "Обідні супи та бульйони",
+                            Name = "Супи"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Description = "Гарніри та страви з м'яса або риби",
+                            Name = "Основні страви"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Description = "Легкі і поживні салати",
+                            Name = "Салати"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Description = "Солодощі, торти, печиво",
+                            Name = "Десерти"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Description = "Чай, кава, коктейлі",
+                            Name = "Напої"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Description = "Хліб, пироги, здоба",
+                            Name = "Випічка"
+                        });
                 });
 
             modelBuilder.Entity("Crispy.Core.Entities.Comment", b =>
@@ -101,6 +145,21 @@ namespace Crispy.Infrastructure.Migrations
                     b.ToTable("Favorites");
                 });
 
+            modelBuilder.Entity("Crispy.Core.Entities.FavoriteRecipe", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RecipeId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId", "RecipeId");
+
+                    b.HasIndex("RecipeId");
+
+                    b.ToTable("FavoriteRecipes");
+                });
+
             modelBuilder.Entity("Crispy.Core.Entities.Ingredient", b =>
                 {
                     b.Property<int>("Id")
@@ -119,6 +178,35 @@ namespace Crispy.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Ingredients");
+                });
+
+            modelBuilder.Entity("Crispy.Core.Entities.MealPlan", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DayOfWeek")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MealType")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RecipeId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RecipeId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("MealPlans");
                 });
 
             modelBuilder.Entity("Crispy.Core.Entities.Recipe", b =>
@@ -240,6 +328,39 @@ namespace Crispy.Infrastructure.Migrations
                     b.ToTable("Reviews");
                 });
 
+            modelBuilder.Entity("Crispy.Core.Entities.ShoppingListItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("IngredientName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsBought")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Quantity")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ShoppingListItems");
+                });
+
             modelBuilder.Entity("Crispy.Core.Entities.User", b =>
                 {
                     b.Property<int>("Id")
@@ -314,6 +435,21 @@ namespace Crispy.Infrastructure.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("Crispy.Core.Entities.UserFollower", b =>
+                {
+                    b.Property<int>("FollowerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FollowedUserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("FollowerId", "FollowedUserId");
+
+                    b.HasIndex("FollowedUserId");
+
+                    b.ToTable("UserFollowers");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>
@@ -486,6 +622,44 @@ namespace Crispy.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Crispy.Core.Entities.FavoriteRecipe", b =>
+                {
+                    b.HasOne("Crispy.Core.Entities.Recipe", "Recipe")
+                        .WithMany()
+                        .HasForeignKey("RecipeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Crispy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Recipe");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Crispy.Core.Entities.MealPlan", b =>
+                {
+                    b.HasOne("Crispy.Core.Entities.Recipe", "Recipe")
+                        .WithMany()
+                        .HasForeignKey("RecipeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Crispy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Recipe");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Crispy.Core.Entities.Recipe", b =>
                 {
                     b.HasOne("Crispy.Core.Entities.Category", "Category")
@@ -539,6 +713,36 @@ namespace Crispy.Infrastructure.Migrations
                     b.Navigation("Recipe");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Crispy.Core.Entities.ShoppingListItem", b =>
+                {
+                    b.HasOne("Crispy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Crispy.Core.Entities.UserFollower", b =>
+                {
+                    b.HasOne("Crispy.Core.Entities.User", "FollowedUser")
+                        .WithMany("Followers")
+                        .HasForeignKey("FollowedUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Crispy.Core.Entities.User", "Follower")
+                        .WithMany("Following")
+                        .HasForeignKey("FollowerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FollowedUser");
+
+                    b.Navigation("Follower");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -618,6 +822,10 @@ namespace Crispy.Infrastructure.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("Favorites");
+
+                    b.Navigation("Followers");
+
+                    b.Navigation("Following");
 
                     b.Navigation("Recipes");
 
