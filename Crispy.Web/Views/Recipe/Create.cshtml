@@ -7,6 +7,18 @@
     <div class="col-md-8">
         <h2>Створити новий рецепт</h2>
 
+        <form asp-action="Import" method="post" class="mb-4">
+            <label class="form-label fw-bold">Імпорт рецепту за посиланням</label>
+            <div class="input-group">
+                <input type="url" name="url" class="form-control" placeholder="https://..." value="@ViewBag.ImportUrl" required />
+                <button type="submit" class="btn btn-outline-primary">Імпортувати рецепт</button>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(ViewBag.ImportError as string))
+            {
+                <div class="text-danger mt-2">@ViewBag.ImportError</div>
+            }
+        </form>
+
         <form asp-action="Create" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
@@ -32,16 +44,63 @@
             <div class="mb-4 p-3 border rounded bg-light">
                 <h5 class="fw-bold mb-3">🛒 Інгредієнти</h5>
 
-                <div id="ingredients-container"></div>
+                <div id="ingredients-container">
+                    @if (Model?.Ingredients != null && Model.Ingredients.Any())
+                    {
+                        for (var i = 0; i < Model.Ingredients.Count; i++)
+                        {
+                            var ingredient = Model.Ingredients[i];
+                            <div class="row mb-2 align-items-center ingredient-row">
+                                <div class="col-md-5">
+                                    <input type="text" name="Ingredients[@i].Name" class="form-control form-control-sm" value="@ingredient.Name" required />
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="number" step="0.1" name="Ingredients[@i].Quantity" class="form-control form-control-sm"
+                                           value="@ingredient.Quantity.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)" required />
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="text" name="Ingredients[@i].Unit" class="form-control form-control-sm" value="@ingredient.Unit" required />
+                                </div>
+                                <div class="col-md-1 text-end">
+                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest('.ingredient-row').remove()">
+                                        ❌
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
 
                 <button type="button" class="btn btn-sm btn-outline-success mt-2 fw-bold" onclick="addIngredient()">
                     + Додати інгредієнт
                 </button>
             </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model?.ImageUrl))
+            {
+                <div class="form-group mb-4">
+                    <label class="form-label">Імпортоване фото</label>
+                    <div class="mb-2">
+                        <img src="@Model.ImageUrl" class="img-fluid rounded" style="max-height: 320px; object-fit: cover;" alt="Імпортоване фото" />
+                    </div>
+                </div>
+            }
+
+            <input asp-for="ImageUrl" type="hidden" />
+
             <div class="form-group mb-4">
                 <label asp-for="ImageFile" class="form-label">Фото готової страви</label>
                 <input asp-for="ImageFile" type="file" class="form-control" accept="image/*" />
                 <span asp-validation-for="ImageFile" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Servings" class="form-label fw-bold">Кількість порцій</label>
+                <div class="input-group" style="max-width: 200px;">
+                    <span class="input-group-text">🍽️</span>
+                    <input asp-for="Servings" class="form-control" type="number" min="1" max="100" />
+                </div>
+                <span asp-validation-for="Servings" class="text-danger"></span>
             </div>
 
             <button type="submit" class="btn btn-success">Зберегти рецепт</button>
@@ -50,14 +109,13 @@
 </div>
 
 <script>
-    let ingredientIndex = 0;
+    let ingredientIndex = @(Model?.Ingredients?.Count ?? 0);
 
     function addIngredient() {
         const container = document.getElementById('ingredients-container');
         const row = document.createElement('div');
         row.className = 'row mb-2 align-items-center ingredient-row';
 
-        // Використовуємо Ingredients з великої літери, щоб точно співпадало з ViewModel
         row.innerHTML = `
             <div class="col-md-5">
                 <input type="text" name="Ingredients[${ingredientIndex}].Name" class="form-control form-control-sm" placeholder="Назва (напр. Борошно)" required />
@@ -79,8 +137,9 @@
         ingredientIndex++;
     }
 
-    // Автоматично додаємо один порожній рядок при завантаженні сторінки
     window.onload = function() {
-        addIngredient();
+        if (ingredientIndex === 0) {
+            addIngredient();
+        }
     };
 </script>

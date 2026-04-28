@@ -9,6 +9,19 @@
     {
         currentUserIdInt = parsedId;
     }
+
+    var baseServings = Model.Servings > 0 ? Model.Servings : 2;
+
+    // Дістаємо кроки або з Instructions, або з Description
+    var instructionSource = !string.IsNullOrWhiteSpace(Model.Instructions)
+        ? Model.Instructions
+        : Model.Description;
+
+    var instructionSteps = (instructionSource ?? string.Empty)
+        .Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+        .Select(step => step.Trim())
+        .Where(step => !string.IsNullOrWhiteSpace(step))
+        .ToList();
 }
 
 <div class="container mt-5 mb-5">
@@ -63,6 +76,52 @@
             </div>
             
             <p class="fs-5" style="white-space: pre-wrap;">@Model.Description</p>
+
+            @if (instructionSteps.Any())
+            {
+                <hr class="my-4" />
+                <div class="text-center">
+                    <button type="button" class="btn btn-lg btn-primary fw-bold shadow-sm px-5 py-3" id="start-cooking">
+                        🍳 Почати готувати (Інтерактивний режим)
+                    </button>
+                </div>
+            }
+
+            @if (Model.RecipeIngredients != null && Model.RecipeIngredients.Any())
+            {
+                <hr class="my-4" />
+                <div class="row align-items-center mb-3">
+                    <div class="col-md-6">
+                        <h4 class="mb-0 fw-bold">Інгредієнти</h4>
+                    </div>
+                    <div class="col-md-6 d-flex justify-content-md-end align-items-center mt-3 mt-md-0">
+                        <label class="me-2 fw-bold text-muted">Кількість порцій:</label>
+                        <div class="input-group" style="max-width: 140px;">
+                            <button class="btn btn-outline-secondary fw-bold" type="button" id="btn-minus-servings">-</button>
+                            <input type="number" id="servings-input" class="form-control text-center fw-bold text-primary"
+                                   value="@baseServings" min="1" max="100" data-original-servings="@baseServings" />
+                            <button class="btn btn-outline-secondary fw-bold" type="button" id="btn-plus-servings">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <ul class="list-group mb-4" id="ingredients-list">
+                    @foreach (var item in Model.RecipeIngredients)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center fs-5">
+                            <span>@item.Ingredient?.Name</span>
+                            <span>
+                                <span class="ingredient-qty fw-bold"
+                                      data-base-qty="@item.Quantity.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)">
+                                    @item.Quantity.ToString("0.##")
+                                </span>
+                                <span class="text-muted">@item.Unit</span>
+                            </span>
+                        </li>
+                    }
+                </ul>
+            }
+
         </div>
         <hr class="my-4" />
         <div class="d-flex justify-content-between align-items-center">
@@ -72,6 +131,7 @@
             {
                 <form asp-controller="Recipe" asp-action="AddToShoppingList" method="post">
                     <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="requestedServings" id="requested-servings" value="@baseServings" />
                     <button type="submit" class="btn btn-success btn-lg fw-bold shadow-sm">
                         🛒 Додати продукти в список покупок
                     </button>
@@ -139,7 +199,7 @@
     @* У місці, де у вас є кнопка видалення: *@
     @if (User.Identity!.IsAuthenticated && (Model.UserId == currentUserIdInt || User.IsInRole("Admin")))
     {
-        <form asp-controller="Recipe" asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Ви впевнені, що хочете видалити цей рецепт?');">
+        <form asp-controller="Recipe" asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Ви впевнений, що хочете видалити цей рецепт?');">
             <input type="hidden" name="id" value="@Model.Id" />
             <button type="submit" class="btn btn-outline-danger shadow-sm">
                 🗑️ Видалити
@@ -147,3 +207,257 @@
         </form>
     }
 </div>
+
+<div id="focus-mode" class="focus-mode d-none" aria-hidden="true">
+    <div class="focus-mode-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <span class="text-uppercase text-muted fw-bold" id="focus-step-counter"></span>
+            <button type="button" class="btn btn-outline-light" id="focus-exit">Закрити</button>
+        </div>
+        <div class="focus-mode-step" id="focus-step-text"></div>
+        <div class="focus-mode-timer d-none" id="focus-timer">
+            <div class="focus-mode-timer-value" id="focus-timer-value">00:00</div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-warning fw-bold" id="focus-timer-start">Старт</button>
+                <button type="button" class="btn btn-outline-light" id="focus-timer-reset">Скинути</button>
+            </div>
+        </div>
+        <div class="focus-mode-actions">
+            <button type="button" class="btn btn-outline-light btn-lg" id="focus-prev">Назад</button>
+            <button type="button" class="btn btn-success btn-lg fw-bold" id="focus-next">Далі</button>
+        </div>
+        <div class="text-muted mt-3">Пробіл — наступний крок. Esc — вихід.</div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Логіка для порцій
+        const servingsInput = document.getElementById("servings-input");
+        if (servingsInput) {
+            const btnMinus = document.getElementById("btn-minus-servings");
+            const btnPlus = document.getElementById("btn-plus-servings");
+            const hiddenServings = document.getElementById("requested-servings");
+            const items = document.querySelectorAll(".ingredient-qty");
+            const originalServings = parseFloat(servingsInput.getAttribute("data-original-servings"));
+
+            function updateQuantities() {
+                let current = parseFloat(servingsInput.value);
+                if (isNaN(current) || current < 1) {
+                    current = 1;
+                    servingsInput.value = 1;
+                }
+
+                const ratio = current / originalServings;
+
+                items.forEach(el => {
+                    const baseQty = parseFloat(el.getAttribute("data-base-qty"));
+                    const newQty = baseQty * ratio;
+                    el.innerText = Number.isInteger(newQty) ? newQty : newQty.toFixed(1);
+                });
+
+                if (hiddenServings) hiddenServings.value = current;
+            }
+
+            btnMinus.addEventListener("click", function () {
+                if (servingsInput.value > 1) {
+                    servingsInput.value = parseInt(servingsInput.value) - 1;
+                    updateQuantities();
+                }
+            });
+
+            btnPlus.addEventListener("click", function () {
+                servingsInput.value = parseInt(servingsInput.value) + 1;
+                updateQuantities();
+            });
+
+            servingsInput.addEventListener("input", updateQuantities);
+        }
+
+        // Логіка для інтерактивного режиму готування
+        // ВАЖЛИВО: Використовуємо Html.Raw, щоб лапки не ламали JS-код
+        const cookingSteps = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(instructionSteps));
+        
+        const startCookingButton = document.getElementById("start-cooking");
+        const focusMode = document.getElementById("focus-mode");
+        const focusStepText = document.getElementById("focus-step-text");
+        const focusStepCounter = document.getElementById("focus-step-counter");
+        const focusPrevButton = document.getElementById("focus-prev");
+        const focusNextButton = document.getElementById("focus-next");
+        const focusExitButton = document.getElementById("focus-exit");
+        const focusTimer = document.getElementById("focus-timer");
+        const focusTimerValue = document.getElementById("focus-timer-value");
+        const focusTimerStart = document.getElementById("focus-timer-start");
+        const focusTimerReset = document.getElementById("focus-timer-reset");
+
+        if (!startCookingButton) {
+            return;
+        }
+
+        let currentStepIndex = 0;
+        let timerIntervalId = null;
+        let remainingSeconds = 0;
+        let audioContext = null;
+
+        function extractMinutes(stepText) {
+            const minuteMatch = stepText.match(/(\d+)\s*(хвилин|хв\.?|хв|мин|minutes|min)\b/i);
+            if (minuteMatch) {
+                return parseInt(minuteMatch[1], 10);
+            }
+
+            const hourMatch = stepText.match(/(\d+)\s*(годин|год|hours|hour|h)\b/i);
+            if (hourMatch) {
+                return parseInt(hourMatch[1], 10) * 60;
+            }
+
+            return null;
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(remainingSeconds / 60);
+            const seconds = remainingSeconds % 60;
+            focusTimerValue.textContent = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+        }
+
+        function stopTimer() {
+            if (timerIntervalId) {
+                clearInterval(timerIntervalId);
+                timerIntervalId = null;
+            }
+        }
+
+        function resetTimer(minutes) {
+            stopTimer();
+            remainingSeconds = minutes * 60;
+            updateTimerDisplay();
+        }
+
+        function playBeep() {
+            try {
+                audioContext ??= new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+
+                oscillator.type = "sine";
+                oscillator.frequency.value = 880;
+                gain.gain.value = 0.2;
+
+                oscillator.connect(gain);
+                gain.connect(audioContext.destination);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.5);
+            } catch {
+                // Якщо аудіо не підтримується
+            }
+        }
+
+        function updateStep(index) {
+            if (cookingSteps.length === 0) {
+                focusStepText.textContent = "Кроки приготування поки що не додані.";
+                focusStepCounter.textContent = "";
+                focusPrevButton.disabled = true;
+                focusNextButton.disabled = true;
+                focusTimer.classList.add("d-none");
+                stopTimer();
+                return;
+            }
+
+            if (index < 0 || index >= cookingSteps.length) {
+                return;
+            }
+
+            currentStepIndex = index;
+            focusStepText.textContent = cookingSteps[index];
+            focusStepCounter.textContent = `Крок ${index + 1} з ${cookingSteps.length}`;
+            focusPrevButton.disabled = index === 0;
+            focusNextButton.disabled = index === cookingSteps.length - 1;
+
+            const minutes = extractMinutes(cookingSteps[index]);
+            if (minutes) {
+                focusTimer.classList.remove("d-none");
+                resetTimer(minutes);
+            } else {
+                focusTimer.classList.add("d-none");
+                stopTimer();
+            }
+        }
+
+        function openFocusMode() {
+            focusMode.classList.remove("d-none");
+            focusMode.setAttribute("aria-hidden", "false");
+            document.body.classList.add("focus-mode-open");
+            updateStep(0);
+
+            if (!document.fullscreenElement && focusMode.requestFullscreen) {
+                focusMode.requestFullscreen().catch(() => {});
+            }
+        }
+
+        function closeFocusMode() {
+            stopTimer();
+            focusMode.classList.add("d-none");
+            focusMode.setAttribute("aria-hidden", "true");
+            document.body.classList.remove("focus-mode-open");
+
+            if (document.fullscreenElement && document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+
+        startCookingButton.addEventListener("click", openFocusMode);
+        focusExitButton.addEventListener("click", closeFocusMode);
+
+        focusPrevButton.addEventListener("click", function () {
+            updateStep(currentStepIndex - 1);
+        });
+
+        focusNextButton.addEventListener("click", function () {
+            updateStep(currentStepIndex + 1);
+        });
+
+        focusTimerStart.addEventListener("click", function () {
+            if (timerIntervalId || remainingSeconds <= 0) {
+                return;
+            }
+
+            timerIntervalId = setInterval(() => {
+                remainingSeconds -= 1;
+                updateTimerDisplay();
+
+                if (remainingSeconds <= 0) {
+                    stopTimer();
+                    playBeep();
+                }
+            }, 1000);
+        });
+
+        focusTimerReset.addEventListener("click", function () {
+            const minutes = extractMinutes(cookingSteps[currentStepIndex]);
+            if (minutes) {
+                resetTimer(minutes);
+            }
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (focusMode.classList.contains("d-none")) {
+                return;
+            }
+
+            const activeTag = document.activeElement?.tagName;
+            if (activeTag === "INPUT" || activeTag === "TEXTAREA") {
+                return;
+            }
+
+            if (event.code === "Space") {
+                event.preventDefault();
+                if (currentStepIndex < cookingSteps.length - 1) {
+                    updateStep(currentStepIndex + 1);
+                }
+            }
+
+            if (event.code === "Escape") {
+                closeFocusMode();
+            }
+        });
+    });
+</script>

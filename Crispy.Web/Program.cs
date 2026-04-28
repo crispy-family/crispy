@@ -50,6 +50,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
 builder.Services.AddScoped<IRecipeService, RecipeService>();
+builder.Services.AddHttpClient<IRecipeImportService, RecipeImportService>();
 
 //  Memory Cache
 builder.Services.AddMemoryCache();

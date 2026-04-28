@@ -38,7 +38,7 @@ namespace Crispy.Application.Interfaces
 
     public interface IRecipeService
     {
-        Task<bool> CreateRecipeAsync(string title, string description, int userId, string? imagePath = null, int? categoryId = null, List<RecipeIngredientDto>? ingredients = null);
+        Task<bool> CreateRecipeAsync(string title, string description, int userId, int servings, string? imagePath = null, int? categoryId = null, List<RecipeIngredientDto>? ingredients = null);
         Task<IEnumerable<Category>> GetCategoriesAsync();
         Task<IEnumerable<Recipe>> GetAllRecipesAsync();
         Task<IEnumerable<Recipe>> GetUserRecipesAsync(int userId);
@@ -51,7 +51,7 @@ namespace Crispy.Application.Interfaces
         Task AddCommentAsync(int recipeId, int userId, string text);
         Task<IEnumerable<Comment>> GetRecipeCommentsAsync(int recipeId);
         Task<bool> DeleteRecipeAsync(int id, int userId, bool isAdmin = false);
-        Task AddRecipeToShoppingListAsync(int recipeId, int userId);
+        Task AddRecipeToShoppingListAsync(int recipeId, int userId, int? requestedServings = null);
         Task<IEnumerable<ShoppingListItem>> GetUserShoppingListAsync(int userId);
         Task ToggleShoppingItemStatusAsync(int itemId, int userId);
         Task ClearBoughtShoppingItemsAsync(int userId);
@@ -61,5 +61,7 @@ namespace Crispy.Application.Interfaces
         Task<bool> AddMealToPlanAsync(int userId, int recipeId, DayOfWeek dayOfWeek, Crispy.Core.Enums.MealType mealType);
         Task<bool> RemoveMealFromPlanAsync(int planId, int userId);
         Task<IEnumerable<MealPlan>> GetWeeklyPlanAsync(int userId);
+
+        
     }
 }

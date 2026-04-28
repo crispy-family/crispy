@@ -85,7 +85,11 @@ namespace Crispy.Infrastructure.Repositories
         }
         public async Task<Recipe?> GetByIdAsync(int id)
         {
-            return await _context.Recipes.FindAsync(id);
+            return await _context.Recipes
+                .Include(r => r.User)
+                .Include(r => r.RecipeIngredients)
+                    .ThenInclude(ri => ri.Ingredient)
+                .FirstOrDefaultAsync(r => r.Id == id);
         }
 
         public async Task UpdateAsync(Recipe recipe)

@@ -24,13 +24,14 @@ namespace Crispy.Application.Services
             _configuration = configuration;
         }
 
-        public async Task<bool> CreateRecipeAsync(string title, string description, int userId, string? imagePath = null, int? categoryId = null, List<RecipeIngredientDto>? ingredients = null)
+        public async Task<bool> CreateRecipeAsync(string title, string description, int userId, int servings, string? imagePath = null, int? categoryId = null, List<RecipeIngredientDto>? ingredients = null)
         {
             var recipe = new Recipe
             {
                 Title = title,
                 Description = description,
                 UserId = userId,
+                Servings = servings, // <-- Зберігаємо порції
                 ImageUrl = imagePath,
                 CategoryId = categoryId 
             };
@@ -175,24 +176,33 @@ namespace Crispy.Application.Services
 
             return categories;
         }
-        public async Task AddRecipeToShoppingListAsync(int recipeId, int userId)
+        public async Task AddRecipeToShoppingListAsync(int recipeId, int userId, int? requestedServings = null)
         {
-            // 1. Отримуємо всі інгредієнти цього рецепту
+            // 1. Отримуємо рецепт та інгредієнти
+            var recipe = await _repository.GetByIdAsync(recipeId);
             var ingredients = await _repository.GetRecipeIngredientsAsync(recipeId);
 
-            if (!ingredients.Any()) return; // Якщо інгредієнтів немає - нічого не робимо
+            if (!ingredients.Any()) return;
 
-            // 2. Створюємо список покупок за допомогою LINQ
+            // 2. Визначаємо множник на основі пропорції
+            float multiplier = 1.0f;
+            if (requestedServings.HasValue && recipe != null && recipe.Servings > 0 && requestedServings.Value != recipe.Servings)
+            {
+                multiplier = (float)requestedServings.Value / recipe.Servings;
+            }
+
+            // 3. Перерахунок і створення списку для БД
             var shoppingItems = ingredients.Select(ri => new ShoppingListItem
             {
                 UserId = userId,
                 IngredientName = ri.Ingredient?.Name ?? "Невідомий інгредієнт",
-                Quantity = ri.Quantity.ToString(), // Перетворюємо float на рядок для кошика
+                // Множимо базову кількість на multiplier
+                Quantity = (ri.Quantity * multiplier).ToString("0.##"), 
                 Unit = ri.Unit,
                 IsBought = false
             }).ToList();
 
-            // 3. Зберігаємо все в базу
+            // 4. Зберігаємо оновлені грамівки в базу
             await _repository.AddToShoppingListAsync(shoppingItems);
         }
         public async Task<IEnumerable<ShoppingListItem>> GetUserShoppingListAsync(int userId)

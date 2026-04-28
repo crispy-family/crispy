@@ -20,3 +20,56 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+body.focus-mode-open {
+  overflow: hidden;
+}
+
+.focus-mode {
+  position: fixed;
+  inset: 0;
+  background: #0f172a;
+  color: #f8fafc;
+  z-index: 1055;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.focus-mode-card {
+  width: min(900px, 100%);
+  background: rgba(15, 23, 42, 0.95);
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.focus-mode-step {
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  line-height: 1.6;
+  font-weight: 600;
+  margin-bottom: 2rem;
+}
+
+.focus-mode-timer {
+  background: rgba(148, 163, 184, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.focus-mode-timer-value {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+}
+
+.focus-mode-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}

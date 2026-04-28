@@ -12,14 +12,19 @@ namespace Crispy.Web.Controllers
     public class RecipeController : BaseApiController
     {
         private readonly IRecipeService _recipeService;
+        private readonly IRecipeImportService _recipeImportService;
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly UserManager<User> _userManager;
 
-        // Інжектимо IWebHostEnvironment для збереження файлів
-        public RecipeController(IRecipeService recipeService, UserManager<User> userManager, IWebHostEnvironment webHostEnvironment)
+        public RecipeController(
+            IRecipeService recipeService,
+            IRecipeImportService recipeImportService,
+            UserManager<User> userManager,
+            IWebHostEnvironment webHostEnvironment)
             : base(userManager)
         {
             _recipeService = recipeService;
+            _recipeImportService = recipeImportService;
             _userManager = userManager;
             _webHostEnvironment = webHostEnvironment;
         }
@@ -29,7 +34,38 @@ namespace Crispy.Web.Controllers
         {
             var categories = await _recipeService.GetCategoriesAsync();
             ViewBag.Categories = new SelectList(categories, "Id", "Name");
-            return View();
+            return View(new CreateRecipeViewModel());
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Import(string url)
+        {
+            var categories = await _recipeService.GetCategoriesAsync();
+            ViewBag.Categories = new SelectList(categories, "Id", "Name");
+            ViewBag.ImportUrl = url;
+
+            if (string.IsNullOrWhiteSpace(url) || !Uri.TryCreate(url, UriKind.Absolute, out _))
+            {
+                ViewBag.ImportError = "Вкажіть коректне URL-посилання.";
+                return View("Create", new CreateRecipeViewModel());
+            }
+
+            var imported = await _recipeImportService.ImportAsync(url);
+            if (imported == null || string.IsNullOrWhiteSpace(imported.Title))
+            {
+                ViewBag.ImportError = "Не вдалося імпортувати рецепт із цього посилання.";
+                return View("Create", new CreateRecipeViewModel());
+            }
+
+            var model = new CreateRecipeViewModel
+            {
+                Title = imported.Title,
+                Description = imported.Description,
+                ImageUrl = imported.ImageUrl,
+                Ingredients = imported.Ingredients
+            };
+
+            return View("Create", model);
         }
 
         [HttpPost]
@@ -69,15 +105,20 @@ namespace Crispy.Web.Controllers
 
                 imagePath = "/images/recipes/" + uniqueFileName;
             }
+            else if (!string.IsNullOrWhiteSpace(model.ImageUrl) && Uri.TryCreate(model.ImageUrl, UriKind.Absolute, out var imageUri))
+            {
+                imagePath = imageUri.ToString();
+            }
 
             
             var success = await _recipeService.CreateRecipeAsync(
                 model.Title,
                 model.Description,
                 user.Id,
+                model.Servings,    // <--- Передаємо введену кількість порцій
                 imagePath,
-                model.CategoryId,  // <--- Додали передачу Категорії
-                model.Ingredients  // <--- Передаємо інгредієнти замість null
+                model.CategoryId,  
+                model.Ingredients  
             );
 
             if (success)
@@ -202,18 +243,16 @@ namespace Crispy.Web.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> AddToShoppingList(int id)
+        public async Task<IActionResult> AddToShoppingList(int id, int requestedServings)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            // Викликаємо наш новий сервіс
-            await _recipeService.AddRecipeToShoppingListAsync(id, user.Id);
+            // Передаємо requestedServings далі в сервіс
+            await _recipeService.AddRecipeToShoppingListAsync(id, user.Id, requestedServings);
 
-            // Зберігаємо повідомлення, яке покажемо на сторінці після перезавантаження
             TempData["SuccessMessage"] = "🛒 Інгредієнти успішно додані до вашого списку покупок!";
 
-            // Повертаємо на сторінку рецепту
             return RedirectToAction("Details", new { id = id });
         }
     }

@@ -16,9 +16,16 @@ namespace Crispy.Web.Models
         [Display(Name = "Фото готової страви")]
         public IFormFile? ImageFile { get; set; }
 
+        public string? ImageUrl { get; set; }
+
         [Display(Name = "Категорія")]
         public int? CategoryId { get; set; }
 
         public List<RecipeIngredientDto> Ingredients { get; set; } = new List<RecipeIngredientDto>();
+
+        [Display(Name = "Кількість порцій")]
+        [Required(ErrorMessage = "Будь ласка, вкажіть кількість порцій")]
+        [Range(1, 100, ErrorMessage = "Кількість порцій має бути від 1 до 100")]
+        public int Servings { get; set; } = 2; // За замовчуванням 2 порції
     }
 }
