@@ -3,6 +3,7 @@ using Crispy.Core.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Crispy.Web.Filters;
 
 namespace Crispy.Web.Controllers
 {
@@ -10,12 +11,14 @@ namespace Crispy.Web.Controllers
     {
         private readonly IRecipeService _recipeService;
         private readonly UserManager<User> _userManager;
+        private readonly IMealDbClient _mealDbClient;
 
-        public HomeController(IRecipeService recipeService, UserManager<User> userManager)
+        public HomeController(IRecipeService recipeService, UserManager<User> userManager, IMealDbClient mealDbClient)
             : base(userManager)
         {
             _recipeService = recipeService;
             _userManager = userManager;
+            _mealDbClient = mealDbClient;
         }
 
         [HttpGet]
@@ -59,6 +62,7 @@ namespace Crispy.Web.Controllers
         public IActionResult Privacy() => View();
 
         [Authorize]
+        [IpRateLimitFilter(MaxRequests = 30, TimeWindowInSeconds = 60)] // До 30 оновлень стрічки на хвилину
         public async Task<IActionResult> Feed()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -67,6 +71,21 @@ namespace Crispy.Web.Controllers
 
             var feedRecipes = await _recipeService.GetUserFeedAsync(user.Id);
             return View(feedRecipes);
+        }
+
+        // Тестовий метод для перевірки API1
+        [HttpGet]
+        public async Task<IActionResult> TestExternalApi()
+        {
+            var recipeJson = await _mealDbClient.GetRandomRecipeAsync();
+            return Content(recipeJson, "application/json"); // Повертаємо як звичайний текст/json
+        }
+
+        public IActionResult RateLimitExceeded()
+        {
+            // Не забудьте створити просту сторінку RateLimitExceeded.cshtml у Views/Home/
+            // з текстом "Ви робите запити занадто часто. Зачекайте хвилину."
+            return View();
         }
     }
 }

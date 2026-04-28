@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Crispy.Web.Filters;
 
 namespace Crispy.Web.Controllers
 {
@@ -140,6 +141,7 @@ namespace Crispy.Web.Controllers
 
         [AllowAnonymous] // Додаємо, щоб анонімні теж могли дивитись (якщо ви хочете цього)
         [HttpGet]
+        [IpRateLimitFilter(MaxRequests = 20, TimeWindowInSeconds = 60)]
         public async Task<IActionResult> Details(int id)
         {
             var recipe = await _recipeService.GetRecipeByIdAsync(id);

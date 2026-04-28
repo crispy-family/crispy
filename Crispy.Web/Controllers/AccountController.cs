@@ -3,6 +3,7 @@ using Crispy.Core.Entities;
 using Crispy.Web.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Crispy.Web.Filters;
 
 namespace Crispy.Web.Controllers
 {
@@ -39,9 +40,11 @@ namespace Crispy.Web.Controllers
         }
 
         [HttpGet]
+        [IpRateLimitFilter(MaxRequests = 5, TimeWindowInSeconds = 60)] // Додаємо на GET
         public IActionResult Login() => View();
 
         [HttpPost]
+        [IpRateLimitFilter(MaxRequests = 5, TimeWindowInSeconds = 60)] // Залишається на POST
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (!ModelState.IsValid)

@@ -7,6 +7,7 @@ using Crispy.Application.Services;
 using Serilog;
 using Crispy.Infrastructure.Repositories;
 using Crispy.Web.Middleware;
+using Crispy.Infrastructure.HttpClients;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +52,10 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
 builder.Services.AddScoped<IRecipeService, RecipeService>();
 builder.Services.AddHttpClient<IRecipeImportService, RecipeImportService>();
+builder.Services.AddHttpClient<IMealDbClient, MealDbClient>(client =>
+{
+    client.BaseAddress = new Uri("https://www.themealdb.com/api/json/v1/1/");
+});
 
 //  Memory Cache
 builder.Services.AddMemoryCache();

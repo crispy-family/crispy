@@ -19,7 +19,7 @@ namespace Crispy.Tests
             // Ініціалізуємо моки для кешу та конфігурації, щоб використовувати їх у всіх тестах
             _mockCache = new Mock<IMemoryCache>();
             _mockConfig = new Mock<IConfiguration>();
-            
+
             // Налаштовуємо мок IMemoryCache, щоб метод TryGetValue завжди повертав false
             object expectedValue = null;
             _mockCache.Setup(mc => mc.TryGetValue(It.IsAny<object>(), out expectedValue))
@@ -126,8 +126,8 @@ namespace Crispy.Tests
 
             var result = await recipeService.UpdateRecipeAsync(testRecipeId, "Нова назва", "Новий опис", ownerUserId);
 
-            Assert.True(result); 
-            mockRepo.Verify(repo => repo.UpdateAsync(It.IsAny<Recipe>()), Times.Once); 
+            Assert.True(result);
+            mockRepo.Verify(repo => repo.UpdateAsync(It.IsAny<Recipe>()), Times.Once);
         }
 
         [Fact]
@@ -136,7 +136,7 @@ namespace Crispy.Tests
             var mockRepo = new Mock<IRecipeRepository>();
             int testRecipeId = 1;
             int ownerUserId = 5;
-            int hackerUserId = 99; 
+            int hackerUserId = 99;
 
             var existingRecipe = new Recipe { Id = testRecipeId, UserId = ownerUserId };
 
@@ -147,8 +147,8 @@ namespace Crispy.Tests
 
             var result = await recipeService.UpdateRecipeAsync(testRecipeId, "Зламана назва", "Опис", hackerUserId);
 
-            Assert.False(result); 
-            mockRepo.Verify(repo => repo.UpdateAsync(It.IsAny<Recipe>()), Times.Never); 
+            Assert.False(result);
+            mockRepo.Verify(repo => repo.UpdateAsync(It.IsAny<Recipe>()), Times.Never);
         }
 
         [Fact]
@@ -174,7 +174,7 @@ namespace Crispy.Tests
         public async Task DeleteRecipeAsync_ShouldReturnFalse_WhenRecipeDoesNotExist()
         {
             var mockRepo = new Mock<IRecipeRepository>();
-            int testRecipeId = 999; 
+            int testRecipeId = 999;
             int userId = 3;
 
             mockRepo.Setup(repo => repo.GetByIdAsync(testRecipeId))
@@ -255,7 +255,7 @@ namespace Crispy.Tests
             string title = "Борщ";
             string desc = "Класичний рецепт";
             int userId = 1;
-            int categoryId = 3; 
+            int categoryId = 3;
 
             var result = await recipeService.CreateRecipeAsync(title, desc, userId, null, categoryId);
 
@@ -290,8 +290,8 @@ namespace Crispy.Tests
         {
             var mockRepo = new Mock<IRecipeRepository>();
             int testRecipeId = 15;
-            int ownerUserId = 5;      
-            int adminUserId = 1;      
+            int ownerUserId = 5;
+            int adminUserId = 1;
             bool isAdmin = true;
 
             var existingRecipe = new Recipe { Id = testRecipeId, UserId = ownerUserId };
@@ -370,7 +370,7 @@ namespace Crispy.Tests
 
             mockRepo.Verify(repo => repo.AddToShoppingListAsync(It.IsAny<IEnumerable<ShoppingListItem>>()), Times.Never);
         }
-        
+
         [Fact]
         public async Task ToggleFollowUserAsync_ShouldNotCallRepo_WhenUserTriesToFollowSelf()
         {
@@ -489,7 +489,7 @@ namespace Crispy.Tests
 
             int userId = 1;
             int recipeId = 5;
-            
+
             // Мок: рецепт знайдено в БД
             mockRepo.Setup(repo => repo.GetByIdAsync(recipeId))
                     .ReturnsAsync(new Recipe { Id = recipeId, Title = "Салат" });
@@ -497,10 +497,10 @@ namespace Crispy.Tests
             var result = await recipeService.AddMealToPlanAsync(userId, recipeId, DayOfWeek.Monday, Crispy.Core.Enums.MealType.Breakfast);
 
             Assert.True(result);
-            mockRepo.Verify(repo => repo.AddMealToPlanAsync(It.Is<MealPlan>(mp => 
-                mp.UserId == userId && 
-                mp.RecipeId == recipeId && 
-                mp.DayOfWeek == DayOfWeek.Monday && 
+            mockRepo.Verify(repo => repo.AddMealToPlanAsync(It.Is<MealPlan>(mp =>
+                mp.UserId == userId &&
+                mp.RecipeId == recipeId &&
+                mp.DayOfWeek == DayOfWeek.Monday &&
                 mp.MealType == Crispy.Core.Enums.MealType.Breakfast)), Times.Once);
         }
 
@@ -511,7 +511,7 @@ namespace Crispy.Tests
             var recipeService = new RecipeService(mockRepo.Object, _mockCache.Object, _mockConfig.Object);
 
             int recipeId = 99;
-            
+
             // Мок: рецепт НЕ знайдено (null)
             mockRepo.Setup(repo => repo.GetByIdAsync(recipeId))
                     .ReturnsAsync((Recipe?)null);
