@@ -5,13 +5,13 @@
 
 <div class="container mt-5 mb-5 max-w-md">
     <div class="card shadow-sm border-0">
-        <div class="card-header bg-warning text-dark p-4 d-flex justify-content-between align-items-center">
+        <div class="card-header bg-primary text-white p-4 d-flex justify-content-between align-items-center">
             <h3 class="mb-0 fw-bold">🛒 Список покупок</h3>
 
             @if (Model.Any(m => m.IsBought))
             {
                 <form asp-controller="ShoppingList" asp-action="ClearBought" method="post" class="m-0">
-                    <button type="submit" class="btn btn-sm btn-outline-dark fw-bold">
+                    <button type="submit" class="btn btn-sm btn-secondary fw-bold">
                         🧹 Очистити куплене
                     </button>
                 </form>
@@ -53,7 +53,7 @@
                     <h1 class="display-1 mb-3">🛍️</h1>
                     <h4>Твій кошик порожній</h4>
                     <p>Знайди цікавий рецепт і додай інгредієнти сюди!</p>
-                    <a asp-controller="Home" asp-action="Index" class="btn btn-warning mt-2">Перейти до рецептів</a>
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-primary mt-2">Перейти до рецептів</a>
                 </div>
             }
         </div>
