@@ -1,22 +1,48 @@
 ﻿@model Crispy.Web.Models.RegisterViewModel
-<h2>Реєстрація</h2>
-<form asp-action="Register" method="post">
-    <div asp-validation-summary="All" class="text-danger"></div>
+@{
+    ViewData["Title"] = "Реєстрація";
+}
 
-    <div>
-        <label asp-for="Email"></label>
-        <input asp-for="Email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger"></span>
+<div class="auth-container">
+    <div class="auth-card">
+        <h2 class="auth-title">Створити акаунт</h2>
+        
+        <form asp-action="Register" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" class="auth-form">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+            <div class="mb-3">
+                <label asp-for="Username" class="form-label">Ім'я користувача</label>
+                <input asp-for="Username" class="form-control" autocomplete="username" aria-required="true" placeholder="Наприклад: Шеф Кухар" />
+                <span asp-validation-for="Username" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" autocomplete="email" aria-required="true" placeholder="name@example.com" />
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="Пароль" />
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ConfirmPassword" class="form-label"></label>
+                <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="Підтвердження паролю" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Зареєструватися</button>
+        </form>
+
+        <div class="auth-links mt-3">
+            <p>Вже є акаунт? <a asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]">Увійти</a></p>
+        </div>
     </div>
-    <div>
-        <label asp-for="Username">Ім'я користувача</label>
-        <input asp-for="Username" class="form-control" />
-        <span asp-validation-for="Username" class="text-danger"></span>
-    </div>
-    <div>
-        <label asp-for="Password">Пароль</label>
-        <input asp-for="Password" class="form-control" />
-        <span asp-validation-for="Password" class="text-danger"></span>
-    </div>
-    <button type="submit" class="btn btn-primary">Зареєструватися</button>
-</form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

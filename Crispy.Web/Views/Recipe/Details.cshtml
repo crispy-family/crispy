@@ -61,7 +61,7 @@
                         
                         @if (ViewBag.IsFollowing == true)
                         {
-                            <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                            <button type="submit" class="btn btn-sm btn-secondary rounded-pill px-3">
                                 Відписатися
                             </button>
                         }
@@ -97,10 +97,10 @@
                     <div class="col-md-6 d-flex justify-content-md-end align-items-center mt-3 mt-md-0">
                         <label class="me-2 fw-bold text-muted">Кількість порцій:</label>
                         <div class="input-group" style="max-width: 140px;">
-                            <button class="btn btn-outline-secondary fw-bold" type="button" id="btn-minus-servings">-</button>
+                            <button class="btn btn-secondary fw-bold" type="button" id="btn-minus-servings">-</button>
                             <input type="number" id="servings-input" class="form-control text-center fw-bold text-primary"
                                    value="@baseServings" min="1" max="100" data-original-servings="@baseServings" />
-                            <button class="btn btn-outline-secondary fw-bold" type="button" id="btn-plus-servings">+</button>
+                            <button class="btn btn-secondary fw-bold" type="button" id="btn-plus-servings">+</button>
                         </div>
                     </div>
                 </div>
@@ -132,14 +132,14 @@
                 <form asp-controller="Recipe" asp-action="AddToShoppingList" method="post">
                     <input type="hidden" name="id" value="@Model.Id" />
                     <input type="hidden" name="requestedServings" id="requested-servings" value="@baseServings" />
-                    <button type="submit" class="btn btn-success btn-lg fw-bold shadow-sm">
+                    <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm">
                         🛒 Додати продукти в список покупок
                     </button>
                 </form>
             }
             else
             {
-                <a asp-controller="Account" asp-action="Login" class="btn btn-outline-success">
+                <a asp-controller="Account" asp-action="Login" class="btn btn-secondary">
                     Увійдіть, щоб додати в список покупок
                 </a>
             }
@@ -161,7 +161,7 @@
                                 <textarea name="text" class="form-control" rows="3" placeholder="Напишіть свої враження від рецепту..." required></textarea>
                             </div>
                             <div class="text-end">
-                                <button type="submit" class="btn btn-warning fw-bold">Надіслати коментар</button>
+                                <button type="submit" class="btn btn-secondary fw-bold">Надіслати коментар</button>
                             </div>
                         </form>
                     </div>
@@ -199,9 +199,9 @@
     @* У місці, де у вас є кнопка видалення: *@
     @if (User.Identity!.IsAuthenticated && (Model.UserId == currentUserIdInt || User.IsInRole("Admin")))
     {
-        <form asp-controller="Recipe" asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Ви впевнений, що хочете видалити цей рецепт?');">
+        <form asp-controller="Recipe" asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Ви впевнені, що хочете видалити цей рецепт?');">
             <input type="hidden" name="id" value="@Model.Id" />
-            <button type="submit" class="btn btn-outline-danger shadow-sm">
+            <button type="submit" class="btn btn-danger shadow-sm">
                 🗑️ Видалити
             </button>
         </form>
@@ -212,19 +212,19 @@
     <div class="focus-mode-card">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <span class="text-uppercase text-muted fw-bold" id="focus-step-counter"></span>
-            <button type="button" class="btn btn-outline-light" id="focus-exit">Закрити</button>
+            <button type="button" class="btn btn-secondary" id="focus-exit">Закрити</button>
         </div>
         <div class="focus-mode-step" id="focus-step-text"></div>
         <div class="focus-mode-timer d-none" id="focus-timer">
             <div class="focus-mode-timer-value" id="focus-timer-value">00:00</div>
             <div class="d-flex gap-2">
-                <button type="button" class="btn btn-warning fw-bold" id="focus-timer-start">Старт</button>
-                <button type="button" class="btn btn-outline-light" id="focus-timer-reset">Скинути</button>
+                <button type="button" class="btn btn-primary fw-bold" id="focus-timer-start">Старт</button>
+                <button type="button" class="btn btn-secondary" id="focus-timer-reset">Скинути</button>
             </div>
         </div>
         <div class="focus-mode-actions">
-            <button type="button" class="btn btn-outline-light btn-lg" id="focus-prev">Назад</button>
-            <button type="button" class="btn btn-success btn-lg fw-bold" id="focus-next">Далі</button>
+            <button type="button" class="btn btn-secondary btn-lg" id="focus-prev">Назад</button>
+            <button type="button" class="btn btn-primary btn-lg fw-bold" id="focus-next">Далі</button>
         </div>
         <div class="text-muted mt-3">Пробіл — наступний крок. Esc — вихід.</div>
     </div>

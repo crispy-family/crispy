@@ -8,6 +8,8 @@ using Serilog;
 using Crispy.Infrastructure.Repositories;
 using Crispy.Web.Middleware;
 using Crispy.Infrastructure.HttpClients;
+using Crispy.Web.Services;
+using Crispy.Web.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,9 +58,11 @@ builder.Services.AddHttpClient<IMealDbClient, MealDbClient>(client =>
 {
     client.BaseAddress = new Uri("https://www.themealdb.com/api/json/v1/1/");
 });
+builder.Services.AddSignalR();
 
 //  Memory Cache
 builder.Services.AddMemoryCache();
+builder.Services.AddHostedService<NotificationBackgroundService>();
 
 var app = builder.Build();
 
@@ -102,6 +106,8 @@ app.UseAuthorization();
 
 //  middleware для логування запитів
 app.UseRequestLogging(); 
+
+app.MapHub<NotificationHub>("/notificationHub");    
 
 app.MapControllerRoute(
     name: "default",

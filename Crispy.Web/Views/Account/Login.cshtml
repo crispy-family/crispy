@@ -1,20 +1,44 @@
 ﻿@model Crispy.Web.Models.LoginViewModel
-<h2>Вхід у систему</h2>
-<form asp-action="Login" method="post">
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-    <div>
-        <label asp-for="Email"></label>
-        <input asp-for="Email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger"></span>
+@{
+    ViewData["Title"] = "Вхід";
+}
+
+<div class="auth-container">
+    <div class="auth-card">
+        <h2 class="auth-title">Вхід у ваш акаунт</h2>
+        
+        <form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" class="auth-form">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="Пароль" />
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3 form-check">
+                <input class="form-check-input" asp-for="RememberMe" />
+                <label class="form-check-label" asp-for="RememberMe">
+                    @Html.DisplayNameFor(m => m.RememberMe)
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Увійти</button>
+        </form>
+
+        <div class="auth-links">
+            <p class="mb-1"><a asp-action="ForgotPassword">Забули пароль?</a></p>
+            <p>Немає акаунту? <a asp-action="Register" asp-route-returnUrl="@ViewData["ReturnUrl"]">Зареєструватися</a></p>
+        </div>
     </div>
-    <div>
-        <label asp-for="Password">Пароль</label>
-        <input asp-for="Password" class="form-control" />
-        <span asp-validation-for="Password" class="text-danger"></span>
-    </div>
-    <div>
-        <input asp-for="RememberMe" type="checkbox" /> Запам'ятати мене
-    </div>
-    <button type="submit" class="btn btn-primary">Увійти</button>
-    <a asp-action="ForgotPassword">Забули пароль?</a>
-</form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

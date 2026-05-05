@@ -51,20 +51,19 @@
                                     </p>
                                 </div>
                                 <div class="card-footer bg-white border-top-0 d-flex justify-content-between">
-                                    <a asp-controller="Recipe" asp-action="Edit" asp-route-id="@recipe.Id" class="btn btn-sm btn-outline-primary">
+                                    <a asp-controller="Recipe" asp-action="Edit" asp-route-id="@recipe.Id" class="btn btn-sm btn-secondary">
                                         ✏️ Редагувати
                                     </a>
                                     <form asp-controller="Recipe" asp-action="Delete" asp-route-id="@recipe.Id" method="post" onsubmit="return confirm('Ви впевнені, що хочете видалити цей рецепт?');">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <button type="submit" class="btn btn-sm btn-danger">
                                             🗑️ Видалити
                                         </button>
                                     </form>
                                 </div>
                                 <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center">
-                                    <a asp-controller="Recipe" asp-action="Details" asp-route-id="@recipe.Id" class="btn btn-sm btn-outline-secondary">
+                                    <a asp-controller="Recipe" asp-action="Details" asp-route-id="@recipe.Id" class="btn btn-sm btn-secondary w-100">
                                         📖 Читати повністю
                                     </a>
-
                                 </div>
                             </div>
                         </div>
@@ -75,7 +74,7 @@
                     <div class="col-12 text-center text-muted p-5 bg-light rounded-3 border-dashed">
                         <h5>Ти ще не додав жодного рецепту 😔</h5>
                         <p>Час поділитися своїми кулінарними секретами!</p>
-                        <a asp-controller="Recipe" asp-action="Create" class="btn btn-warning mt-2">Створити перший рецепт</a>
+                        <a asp-controller="Recipe" asp-action="Create" class="btn btn-primary mt-2">Створити перший рецепт</a>
                     </div>
                 }
             </div>
@@ -93,11 +92,14 @@
                                         @(recipe.Description.Length > 80 ? recipe.Description.Substring(0, 80) + "..." : recipe.Description)
                                     </p>
                                 </div>
-                                <div class="card-footer bg-white border-top-0 text-end">
-                                    <form asp-controller="Recipe" asp-action="ToggleFavorite" method="post">
+                                <div class="card-footer bg-white border-top-0 d-flex gap-2">
+                                    <a asp-controller="Recipe" asp-action="Details" asp-route-id="@recipe.Id" class="btn btn-sm btn-secondary flex-grow-1">
+                                        📖 Читати
+                                    </a>
+                                    <form asp-controller="Recipe" asp-action="ToggleFavorite" method="post" class="m-0">
                                         <input type="hidden" name="recipeId" value="@recipe.Id" />
-                                        <button type="submit" class="btn btn-sm btn-danger text-white">
-                                            ❌ Видалити з улюблених
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            ❌ 
                                         </button>
                                     </form>
                                 </div>

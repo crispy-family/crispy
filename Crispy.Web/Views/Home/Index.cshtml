@@ -4,7 +4,7 @@
 }
 
 <div class="px-4 py-5 my-5 text-center bg-light rounded-3 shadow-sm border">
-    <h1 class="display-4 fw-bold text-dark">Вітаємо у <span class="text-warning">Crispy</span>! 🍳</h1>
+    <h1 class="display-4 fw-bold text-dark">Вітаємо у <span class="text-primary">Crispy</span>! 🍳</h1>
     <div class="col-lg-6 mx-auto">
         <p class="lead mb-4 mt-3 text-secondary">
             Твій особистий простір для кулінарної творчості. Зберігай улюблені рецепти,
@@ -13,13 +13,13 @@
         <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
             @if (User.Identity!.IsAuthenticated)
             {
-                <a asp-controller="Recipe" asp-action="Create" class="btn btn-warning btn-lg px-4 gap-3 fw-bold">
+                <a asp-controller="Recipe" asp-action="Create" class="btn btn-primary btn-lg px-4 gap-3 fw-bold">
                     Створити новий рецепт
                 </a>
             }
             else
             {
-                <a asp-controller="Account" asp-action="Register" class="btn btn-warning btn-lg px-4 gap-3 fw-bold">
+                <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-lg px-4 gap-3 fw-bold">
                     Приєднатися до нас
                 </a>
             }
@@ -37,7 +37,7 @@
             <div class="list-group shadow-sm">
                 <a asp-controller="Home" asp-action="Index" 
                    asp-route-searchQuery="@ViewBag.SearchQuery" 
-                   class="list-group-item list-group-item-action @(ViewBag.SelectedCategory == null ? "active bg-warning border-warning" : "")">
+                   class="list-group-item list-group-item-action @(ViewBag.SelectedCategory == null ? "active bg-primary border-primary" : "")">
                     Всі рецепти
                 </a>
                 @if (ViewBag.Categories != null)
@@ -47,7 +47,7 @@
                         <a asp-controller="Home" asp-action="Index" 
                            asp-route-searchQuery="@ViewBag.SearchQuery" 
                            asp-route-categoryId="@category.Id" 
-                           class="list-group-item list-group-item-action @(ViewBag.SelectedCategory == category.Id ? "active bg-warning border-warning" : "")">
+                           class="list-group-item list-group-item-action @(ViewBag.SelectedCategory == category.Id ? "active bg-primary border-primary" : "")">
                             @category.Name
                         </a>
                     }
@@ -63,13 +63,13 @@
                     <form asp-controller="Home" asp-action="Index" method="get" class="d-flex shadow-sm rounded">
                         <input type="hidden" name="categoryId" value="@ViewBag.SelectedCategory" />
                         <input type="text" name="searchQuery" value="@ViewBag.SearchQuery"
-                               class="form-control form-control-lg border-warning me-2 flex-grow-1"
+                               class="form-control form-control-lg border-primary me-2 flex-grow-1"
                                placeholder="Шукати борщ, піцу або інгредієнти..." />
-                        <button type="submit" class="btn btn-warning btn-lg px-4 fw-bold ms-2"> 🔍 Знайти</button>
+                        <button type="submit" class="btn btn-primary btn-lg px-4 fw-bold ms-2"> 🔍 Знайти</button>
 
                         @if (!string.IsNullOrEmpty(ViewBag.SearchQuery))
                         {
-                            <a asp-controller="Home" asp-action="Index" asp-route-categoryId="@ViewBag.SelectedCategory" class="btn btn-outline-secondary btn-lg ms-2"> Скинути</a>
+                            <a asp-controller="Home" asp-action="Index" asp-route-categoryId="@ViewBag.SelectedCategory" class="btn btn-secondary btn-lg ms-2"> Скинути</a>
                         }
                     </form>
                 </div>
@@ -89,7 +89,7 @@
                     foreach (var recipe in Model)
                     {
                         <div class="col-md-4 mb-4">
-                            <div class="card h-100 shadow-sm">
+                            <div class="card h-100 shadow-sm border-0 bg-white" style="border-radius: 16px; overflow: hidden;">
 
                                 @if (!string.IsNullOrEmpty(recipe.ImageUrl))
                                 {
@@ -103,23 +103,23 @@
                                 }
 
                                 <div class="card-body">
-                                    <h5 class="card-title text-warning fw-bold">@recipe.Title</h5>
-                                    <p class="card-text text-muted">
+                                    <h5 class="card-title text-primary fw-bold">@recipe.Title</h5>
+                                    <p class="card-text text-muted small">
                                         @(recipe.Description.Length > 100 ? recipe.Description.Substring(0, 100) + "..." : recipe.Description)
                                     </p>
                                 </div>
 
-                                <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center">
-                                    <a asp-controller="Recipe" asp-action="Details" asp-route-id="@recipe.Id" class="btn btn-sm btn-outline-secondary">
-                                        📖 Читати повністю
+                                <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center pb-3">
+                                    <a asp-controller="Recipe" asp-action="Details" asp-route-id="@recipe.Id" class="btn btn-sm btn-secondary w-100 me-2" style="border-radius: 8px;">
+                                        📖 Читати
                                     </a>
 
                                     @if (User.Identity!.IsAuthenticated)
                                     {
                                         <form asp-controller="Recipe" asp-action="ToggleFavorite" method="post" class="m-0">
                                             <input type="hidden" name="recipeId" value="@recipe.Id" />
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                ❤️ Зберегти
+                                            <button type="submit" class="btn btn-sm btn-danger" style="border-radius: 8px;" title="Додати до улюблених">
+                                                ❤️
                                             </button>
                                         </form>
                                     }

@@ -75,7 +75,7 @@
 
                                                 <form asp-action="Remove" method="post" class="position-absolute top-0 end-0 mt-1 me-1">
                                                     <input type="hidden" name="planId" value="@meal.Id" />
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger p-0" style="width: 20px; height: 20px; line-height: 1;" title="Видалити з плану">
+                                                    <button type="submit" class="btn btn-sm btn-danger p-0" style="width: 20px; height: 20px; line-height: 1;" title="Видалити з плану">
                                                         &times;
                                                     </button>
                                                 </form>
@@ -86,9 +86,9 @@
 
                                 @if (favoriteRecipes != null && favoriteRecipes.Any())
                                 {
-                                    <button type="button" class="btn btn-sm btn-outline-success mt-1 rounded-circle fw-bold"
+                                    <button type="button" class="btn btn-sm btn-primary mt-1 rounded-circle fw-bold"
                                             data-bs-toggle="modal" data-bs-target="#addMealModal"
-                                            data-day="@day" data-mealtype="@mealType" title="Додати страву">
+                                            data-day="@day" data-mealtype="@mealType" title="Додати страву" style="width: 30px; height: 30px; padding: 0;">
                                         +
                                     </button>
                                 }
@@ -147,7 +147,7 @@
                             <label class="form-label">Введіть назву рецепту:</label>
                             <div class="input-group mb-2">
                                 <input type="text" id="recipeSearchInput" class="form-control" placeholder="Наприклад, борщ...">
-                                <button type="button" class="btn btn-outline-secondary" id="btnSearch">Шукати</button>
+                                <button type="button" class="btn btn-secondary" id="btnSearch">Шукати</button>
                             </div>
                             <!-- Контейнер для результатів пошуку -->
                             <div id="searchResults" class="list-group mt-2" style="max-height: 200px; overflow-y: auto;">

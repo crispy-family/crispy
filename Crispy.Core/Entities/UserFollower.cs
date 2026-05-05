@@ -8,12 +8,12 @@ namespace Crispy.Core.Entities
 {
     public class UserFollower
     {
-        // ID користувача, ЯКИЙ підписується (Читач)
         public int FollowerId { get; set; }
         public User? Follower { get; set; }
 
-        // ID користувача, НА ЯКОГО підписуються (Автор рецептів)
         public int FollowedUserId { get; set; }
         public User? FollowedUser { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow; 
     }
 }

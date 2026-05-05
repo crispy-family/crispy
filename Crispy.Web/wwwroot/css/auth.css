@@ -1,0 +1,69 @@
+﻿body {
+}
+
+.auth-container {
+    min-height: calc(100vh - 180px); /* центрування по вертикалі з урахуванням хедера і футера */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 450px;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 2.5rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08); /* м'яка тінь */
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.auth-title {
+    text-align: center;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: #212529;
+}
+
+.auth-form .form-label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.auth-form .form-control {
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    border: 1px solid #ced4da;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Фокус, гармонізований з base.css */
+.auth-form .form-control:focus {
+    border-color: #258cfb;
+    box-shadow: 0 0 0 0.25rem rgba(37, 140, 251, 0.25);
+}
+
+/* ЗАМІНЮЄМО .auth-form .btn-primary НА ЦЕ: */
+.auth-form .btn {
+    margin-top: 1rem;
+    padding: 0.8rem;
+    font-weight: 600;
+}
+
+.auth-links {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.95rem;
+}
+
+.auth-links a {
+    text-decoration: none;
+    color: #258cfb;
+    font-weight: 500;
+}
+
+.auth-links a:hover {
+    text-decoration: underline;
+}
