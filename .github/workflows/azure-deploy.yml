@@ -19,8 +19,8 @@ jobs:
 
       - name: Build and Publish
         run: |
-          dotnet build --configuration Release
-          dotnet publish -c Release -o ./publish
+          dotnet build Crispy.Web/Crispy.Web.csproj --configuration Release
+          dotnet publish Crispy.Web/Crispy.Web.csproj -c Release -o ./publish
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
