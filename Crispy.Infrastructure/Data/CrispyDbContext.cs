@@ -15,6 +15,7 @@ namespace Crispy.Infrastructure.Data
         public CrispyDbContext(DbContextOptions<CrispyDbContext> options) : base(options)
         {
         }
+
         public DbSet<User> Users { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Recipe> Recipes { get; set; }
@@ -25,18 +26,30 @@ namespace Crispy.Infrastructure.Data
         public DbSet<Comment> Comments { get; set; }
         public DbSet<FavoriteRecipe> FavoriteRecipes { get; set; }
         public DbSet<ShoppingListItem> ShoppingListItems { get; set; }
-
         public DbSet<UserFollower> UserFollowers { get; set; }
         public DbSet<MealPlan> MealPlans { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            // Цей рядок життєво необхідний для роботи системи авторизації!
+            // Життєво необхідно для Identity
             base.OnModelCreating(builder);
 
-            // Вказуємо, що комбінація двох ID є первинним ключем
-            builder.Entity<FavoriteRecipe>()
-                .HasKey(fr => new { fr.UserId, fr.RecipeId });
+            // Композитні первинні ключі
+            builder.Entity<FavoriteRecipe>().HasKey(fr => new { fr.UserId, fr.RecipeId });
+            builder.Entity<UserFollower>().HasKey(uf => new { uf.FollowerId, uf.FollowedUserId });
+
+            // Зв'язки підписок (залишаємо вручну, бо це посилання на одну таблицю User)
+            builder.Entity<UserFollower>()
+                .HasOne(uf => uf.Follower)
+                .WithMany(u => u.Following)
+                .HasForeignKey(uf => uf.FollowerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<UserFollower>()
+                .HasOne(uf => uf.FollowedUser)
+                .WithMany(u => u.Followers)
+                .HasForeignKey(uf => uf.FollowedUserId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Data Seeding для категорій
             builder.Entity<Category>().HasData(
@@ -49,34 +62,25 @@ namespace Crispy.Infrastructure.Data
                 new Category { Id = 7, Name = "Випічка", Description = "Хліб, пироги, здоба" }
             );
 
-            builder.Entity<UserFollower>()
-                .HasKey(uf => new { uf.FollowerId, uf.FollowedUserId });
+            // =========================================================
+            // УНІВЕРСАЛЬНЕ РІШЕННЯ ДЛЯ SQL SERVER (Від Error 1785)
+            // =========================================================
+            // Проходимося по всіх зовнішніх ключах у проєкті...
+            var cascadeFKs = builder.Model.GetEntityTypes()
+                .SelectMany(t => t.GetForeignKeys())
+                .Where(fk => !fk.IsOwnership && fk.DeleteBehavior == DeleteBehavior.Cascade);
 
-            // 2. Налаштовуємо зв'язок для Читача
-            builder.Entity<UserFollower>()
-                .HasOne(uf => uf.Follower)
-                .WithMany(u => u.Following)
-                .HasForeignKey(uf => uf.FollowerId)
-                .OnDelete(DeleteBehavior.Restrict); // Обов'язково Restrict, щоб уникнути помилок SQL
+            foreach (var fk in cascadeFKs)
+            {
+                var tableName = fk.DeclaringEntityType.GetTableName();
 
-            // 3. Налаштовуємо зв'язок для Автора
-            builder.Entity<UserFollower>()
-                .HasOne(uf => uf.FollowedUser)
-                .WithMany(u => u.Followers)
-                .HasForeignKey(uf => uf.FollowedUserId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<MealPlan>()
-                .HasOne(m => m.User)
-                .WithMany()
-                .HasForeignKey(m => m.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            builder.Entity<MealPlan>()
-                .HasOne(m => m.Recipe)
-                .WithMany()
-                .HasForeignKey(m => m.RecipeId)
-                .OnDelete(DeleteBehavior.Restrict); // або Cascade, залежить від вашої логіки
+                // Якщо це не системні таблиці авторизації (AspNetUsers, AspNetRoles тощо)
+                if (tableName != null && !tableName.StartsWith("AspNet"))
+                {
+                    // Тоді вимикаємо каскадне видалення
+                    fk.DeleteBehavior = DeleteBehavior.Restrict;
+                }
+            }
         }
     }
 }

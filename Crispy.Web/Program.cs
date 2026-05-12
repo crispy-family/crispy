@@ -10,8 +10,18 @@ using Crispy.Web.Middleware;
 using Crispy.Infrastructure.HttpClients;
 using Crispy.Web.Services;
 using Crispy.Web.Hubs;
+using Azure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+
+if (builder.Environment.IsProduction())
+{
+    var keyVaultUrl = new Uri("https://crispy-vault-2026.vault.azure.net/");
+
+    builder.Configuration.AddAzureKeyVault(
+        keyVaultUrl,
+        new DefaultAzureCredential());
+}
 
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
@@ -25,7 +35,7 @@ builder.Host.UseSerilog();
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<CrispyDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
 {
